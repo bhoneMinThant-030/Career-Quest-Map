@@ -1,0 +1,55 @@
+
+
+
+
+
+
+
+
+
+quiz = {
+	type: "multiple_choice",
+	select_count: 4,
+	question: "",
+	answers: ["", "", "", ""],
+	user_choice_index: 2            # Third Choice (default value 0 is overwritten by 2)
+}
+
+quiz = {
+	type: "slider",
+	select_count: 10,
+	question: "",
+	user_choice_index: 6            # 6 out of 10
+}
+
+quiz = {
+	type: "textinput",
+	question: "How do u manage with your subjects",
+	plaeholder: "Manage time wisely" # if any, if not leave blank
+	user_input: "I try to connect theories with real-world scenarios"
+}
+
+quiz_types = ["multiple_choice", "slider", "textinput"]
+
+
+quizzes = [
+	{
+		type: "multiple_choice",
+		select_count: 4,
+		question: "What is your course of study",
+		answers: ["Engineering", "Design", "IT", "Business"],
+		user_choice_index: 0
+	},
+	{
+		type: "slider",
+		select_count: 10,
+		question: "How confident you are with our choice of major?",
+		user_choice_index: 0
+	},
+	{
+		type: "textinput",
+		question: "How do u manage with your subjects",
+		plaeholder: "Manage time wisely" # if any, if not leave blank
+		user_input: "I try to connect theories with real-world scenarios"
+	}
+]
