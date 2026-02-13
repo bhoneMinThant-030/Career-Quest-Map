@@ -64,8 +64,12 @@ bg_img = pygame.image.load("images/background.png")
 bg_img = pygame.transform.scale(bg_img, (GAME_WIDTH, GAME_HEIGHT))
 chapter2_bg = pygame.image.load("images/chapter2_bg.png")
 chapter2_bg = pygame.transform.scale(chapter2_bg, (GAME_WIDTH, GAME_HEIGHT))
+chapter2_bg_removed_portal = pygame.image.load("images/chapter2_bg_removed_portal.png")
+chapter2_bg_removed_portal = pygame.transform.scale(chapter2_bg_removed_portal, (GAME_WIDTH, GAME_HEIGHT))
 first_scene_bg = pygame.image.load("images/FirstScene.png")
 first_scene_bg = pygame.transform.scale(first_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
+dw_scene_bg = pygame.image.load("images/dwScene.png")
+dw_scene_bg = pygame.transform.scale(dw_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
 
 
 def _load_preferred_font(candidates, size, italic=False):
@@ -122,7 +126,7 @@ clock = pygame.time.Clock()
 main_player = Player(x=GAME_WIDTH // 2, y=GAME_HEIGHT // 2, width=70, height=70, img_path="images/warrior/", speed=100)
 fedora = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100, img_path="images/fedora/", speed=80)
 wiseman = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100, img_path="images/wiseman/", speed=80)
-dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/dragonWarrior/", speed=0)
+dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=150, height=150, img_path="images/dragonWarrior/", speed=0)
 aung_gyi = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/aungGyi/", speed=0)
 
 home = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 585, 200, 200, "images/house.png", "images/home_bg.png")
@@ -240,7 +244,7 @@ def set_state(new_state, spawn_pos=None, title=None, facing=None):
         elif new_state == WISEMAN:
             bg = wiseman_tent.bg
         elif new_state == CHAPTER2:
-            bg = chapter2_bg
+            bg = chapter2_bg_removed_portal if path_committed else chapter2_bg
         elif new_state in (GATE_SCENE_STATE, DRAGON_SCENE_STATE, INFO_SCENE_STATE):
             bg = active_portal_bg if active_portal_bg is not None else home.bg
         loading_screen(title, bg=bg)
@@ -494,7 +498,7 @@ def render_gate_scene():
 
 
 def render_dragon_scene():
-    bg = active_portal_bg if active_portal_bg is not None else home.bg
+    bg = dw_scene_bg
     screen.blit(bg, (0, 0))
     box_rect = pygame.Rect(40, 50, 720, 330)
     gq.draw_dialog_box(screen, box_rect, fill_color=(10, 10, 10), alpha=210, border_color=(255, 255, 255))
@@ -512,14 +516,14 @@ def render_dragon_scene():
         y += 32
 
     draw_main_player_dialog(screen)
-    screen.blit(pygame.transform.scale(dragon_warrior.img_left, (200, 200)), (500, 380))
+    screen.blit(pygame.transform.scale(dragon_warrior.img_left, (300, 300)), (500, 280))
 
     hint_text = "Left/Right back/next line | Q back to map" if dragon_scene_i < max(0, len(dragon_scene_lines) - 1) else "Left/Right review lines | Q back to map"
     screen.blit(hint_font.render(hint_text, True, (180, 180, 180)), (box_rect.x + 20, box_rect.bottom + 170))
 
 
 def render_info_scene():
-    bg = active_portal_bg if active_portal_bg is not None else home.bg
+    bg = dw_scene_bg
     screen.blit(bg, (0, 0))
     box_rect = pygame.Rect(40, 50, 720, 330)
     gq.draw_dialog_box(screen, box_rect, fill_color=(10, 10, 10), alpha=210, border_color=(255, 255, 255))
@@ -590,7 +594,7 @@ def render_state():
         return
 
     if state == CHAPTER2:
-        screen.blit(chapter2_bg, (0, 0))
+        screen.blit(chapter2_bg_removed_portal if path_committed else chapter2_bg, (0, 0))
         if not path_committed:
             portal1.draw(screen)
             portal2.draw(screen)
