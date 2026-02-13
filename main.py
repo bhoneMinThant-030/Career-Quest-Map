@@ -61,6 +61,8 @@ bg_img = pygame.image.load("images/background.png")
 bg_img = pygame.transform.scale(bg_img, (GAME_WIDTH, GAME_HEIGHT))
 chapter2_bg = pygame.image.load("images/chapter2_bg.png")
 chapter2_bg = pygame.transform.scale(chapter2_bg, (GAME_WIDTH, GAME_HEIGHT))
+first_scene_bg = pygame.image.load("images/FirstScene.png")
+first_scene_bg = pygame.transform.scale(first_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
 
 
 def _load_preferred_font(candidates, size, italic=False):
@@ -252,12 +254,16 @@ def _get_player_label():
     return name if name else "Player"
 
 
-def draw_name_tag(surface, text, center_x, top_y):
-    tag_font = pygame.font.SysFont("Arial", 20, bold=True)
-    txt = tag_font.render(str(text), True, WHITE)
+def draw_name_tag(surface, text, center_x, top_y, max_width=None, font_size=20):
+    tag_font = pygame.font.SysFont("Arial", font_size, bold=True)
+    raw_text = str(text)
+    lines = wrap_text(raw_text, max_width, tag_font) if max_width else [raw_text]
+    if not lines:
+        lines = [raw_text]
+    rendered = [tag_font.render(line, True, WHITE) for line in lines]
     pad_x, pad_y = 10, 5
-    box_w = txt.get_width() + pad_x * 2
-    box_h = txt.get_height() + pad_y * 2
+    box_w = max(t.get_width() for t in rendered) + pad_x * 2
+    box_h = sum(t.get_height() for t in rendered) + (len(rendered) - 1) * 4 + pad_y * 2
     x = int(center_x - box_w // 2)
     y = int(top_y - box_h - 6)
     x = max(8, min(GAME_WIDTH - box_w - 8, x))
@@ -265,7 +271,10 @@ def draw_name_tag(surface, text, center_x, top_y):
     panel = pygame.Rect(x, y, box_w, box_h)
     pygame.draw.rect(surface, (0, 0, 0, 170), panel, border_radius=8)
     pygame.draw.rect(surface, WHITE, panel, 2, border_radius=8)
-    surface.blit(txt, (panel.x + pad_x, panel.y + pad_y))
+    ty = panel.y + pad_y
+    for txt in rendered:
+        surface.blit(txt, (panel.x + (box_w - txt.get_width()) // 2, ty))
+        ty += txt.get_height() + 4
 
 
 def draw_main_player(surface):
@@ -276,6 +285,25 @@ def draw_main_player(surface):
 def draw_main_player_dialog(surface, pos=(100, 360), size=(250, 250)):
     sprite = pygame.transform.scale(main_player.img_down, size)
     surface.blit(sprite, pos)
+
+
+def draw_structure_label(surface, structure, text):
+    label_text = str(text)
+    max_width = 100 if structure in (portal1, portal2, portal3) else None
+    font_size = 16 if structure in (portal1, portal2, portal3) else 20
+
+    cx = structure.rect.centerx
+    top_y = structure.rect.y
+    if structure == portal1:
+        cx -= 26
+        top_y -= 6
+    elif structure == portal2:
+        top_y -= 30
+    elif structure == portal3:
+        cx += 26
+        top_y -= 6
+
+    draw_name_tag(surface, label_text, cx, top_y, max_width=max_width, font_size=font_size)
 
 
 def draw_chapter2_labels():
@@ -291,16 +319,6 @@ def draw_chapter2_labels():
             t4 = label_font.render("Enter the house icon to review your path.", True, WHITE)
             screen.blit(t4, (40, 96))
         return
-
-    options = [get_portal_option(0), get_portal_option(1), get_portal_option(2)]
-    portals = [portal1, portal2, portal3]
-    for i, option in enumerate(options):
-        p = portals[i]
-        y = p.rect.y - 45
-        for line in wrap_text(option, 160, label_font)[:2]:
-            txt = label_font.render(line, True, WHITE)
-            screen.blit(txt, (p.rect.centerx - txt.get_width() // 2, y))
-            y += 22
 
     hint_font = pygame.font.SysFont("Arial", 22)
     hint = hint_font.render("Move to a portal and press E to enter | Q to return outside", True, WHITE)
@@ -543,10 +561,13 @@ def render_state():
     if state == OUTSIDE:
         screen.blit(bg_img, (0, 0))
         home.draw(screen)
+        draw_structure_label(screen, home, "Home")
         if part1_done:
             wiseman_tent.draw(screen)
+            draw_structure_label(screen, wiseman_tent, "Wise Man")
         if chapter2_unlocked:
             exit_gate1.draw(screen)
+            draw_structure_label(screen, exit_gate1, "Chapter Gate")
         render_outside_quest_hint()
         draw_main_player(screen)
         return
@@ -571,10 +592,15 @@ def render_state():
             portal1.draw(screen)
             portal2.draw(screen)
             portal3.draw(screen)
+            draw_structure_label(screen, portal1, get_portal_option(0))
+            draw_structure_label(screen, portal2, get_portal_option(1))
+            draw_structure_label(screen, portal3, get_portal_option(2))
         else:
             dragon_warrior.draw(screen)
+            draw_structure_label(screen, dragon_warrior, "Dragon Warrior")
             if dragon_met:
                 info_hub.draw(screen)
+                draw_structure_label(screen, info_hub, "Info Hub")
         draw_chapter2_labels()
         draw_main_player(screen)
         if show_analysis_overlay:
@@ -594,7 +620,10 @@ def render_state():
         return
 
     if state == PROFILE:
-        screen.fill((20, 20, 20))
+        screen.blit(first_scene_bg, (0, 0))
+        shade = pygame.Surface((GAME_WIDTH, GAME_HEIGHT), pygame.SRCALPHA)
+        shade.fill((0, 0, 0, 120))
+        screen.blit(shade, (0, 0))
         screen.blit(font.render("Create Your Profile", True, WHITE), (240, 70))
         screen.blit(font.render("Name:", True, WHITE), (140, 170))
         profile_name_box.draw()
