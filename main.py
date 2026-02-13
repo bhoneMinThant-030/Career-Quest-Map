@@ -120,12 +120,12 @@ wiseman = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100,
 dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/dragonWarrior/", speed=0)
 aung_gyi = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/aungGyi/", speed=0)
 
-home = Structure(GAME_WIDTH - 650, GAME_HEIGHT - 450, 200, 200, "images/house.png", "images/home_bg.png")
-wiseman_tent = Structure(GAME_WIDTH - 400, GAME_HEIGHT - 200, 100, 100, "images/wiseman/west.png", "images/TreeScene.png")
-exit_gate1 = Structure(GAME_WIDTH - 260, GAME_HEIGHT - 250, 100, 100, "images/gate.png", "images/home_bg.png")
-portal1 = Structure(GAME_WIDTH - 660, GAME_HEIGHT - 500, 100, 100, "images/1stGate.png", "images/innerG1.png")
-portal2 = Structure(GAME_WIDTH - 540, GAME_HEIGHT - 500, 100, 100, "images/2ndGate.png", "images/innerG2.png")
-portal3 = Structure(GAME_WIDTH - 420, GAME_HEIGHT - 500, 100, 100, "images/3rdGate.png", "images/innerG3.png")
+home = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 585, 200, 200, "images/house.png", "images/home_bg.png")
+wiseman_tent = Structure(GAME_WIDTH - 220, GAME_HEIGHT - 210, 100, 100, "images/wiseman/west.png", "images/TreeScene.png")
+exit_gate1 = Structure(GAME_WIDTH - 388, GAME_HEIGHT - 115, 60, 60, "images/gate.png", "images/home_bg.png")
+portal1 = Structure(GAME_WIDTH - 572, GAME_HEIGHT - 460, 65, 65, "images/1stGate.png", "images/innerG1.png")
+portal2 = Structure(GAME_WIDTH - 482, GAME_HEIGHT - 460, 65, 65, "images/2ndGate.png", "images/innerG2.png")
+portal3 = Structure(GAME_WIDTH - 392, GAME_HEIGHT - 460, 65, 65, "images/3rdGate.png", "images/innerG3.png")
 info_hub = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 420, 100, 100, "images/questBooth.png", "images/home_bg.png")
 
 WISEMAN_RETURN_SPAWN = (430, 320)
