@@ -51,6 +51,9 @@ dragon_met = False
 info_pages = []
 info_page_i = 0
 
+DIALOG_PLAYER_POS = (130, 400)
+DIALOG_PLAYER_SIZE = (150, 150)
+
 pygame.init()
 
 screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
@@ -282,8 +285,8 @@ def draw_main_player(surface):
     draw_name_tag(surface, _get_player_label(), main_player.rect.centerx, main_player.rect.y)
 
 
-def draw_main_player_dialog(surface, pos=(100, 360), size=(250, 250)):
-    sprite = pygame.transform.scale(main_player.img_down, size)
+def draw_main_player_dialog(surface, pos=DIALOG_PLAYER_POS, size=DIALOG_PLAYER_SIZE):
+    sprite = pygame.transform.scale(main_player.img_right, size)
     surface.blit(sprite, pos)
 
 
@@ -479,7 +482,7 @@ def render_gate_scene():
             y += 32
 
     draw_main_player_dialog(screen)
-    screen.blit(pygame.transform.scale(aung_gyi.img_down, (200, 200)), (500, 380))
+    screen.blit(pygame.transform.scale(aung_gyi.img_left, (200, 200)), (500, 380))
 
     if at_last:
         hint_text = "Left/Right choose Yes/No | Enter confirm | Q back to gates"
@@ -509,7 +512,7 @@ def render_dragon_scene():
         y += 32
 
     draw_main_player_dialog(screen)
-    screen.blit(pygame.transform.scale(dragon_warrior.img_down, (200, 200)), (500, 380))
+    screen.blit(pygame.transform.scale(dragon_warrior.img_left, (200, 200)), (500, 380))
 
     hint_text = "Left/Right back/next line | Q back to map" if dragon_scene_i < max(0, len(dragon_scene_lines) - 1) else "Left/Right review lines | Q back to map"
     screen.blit(hint_font.render(hint_text, True, (180, 180, 180)), (box_rect.x + 20, box_rect.bottom + 170))
@@ -541,7 +544,7 @@ def render_info_scene():
             break
 
     draw_main_player_dialog(screen)
-    screen.blit(pygame.transform.scale(dragon_warrior.img_down, (200, 200)), (500, 380))
+    screen.blit(pygame.transform.scale(dragon_warrior.img_left, (200, 200)), (500, 380))
 
     screen.blit(hint_font.render(f"Page {info_page_i + 1}/{len(info_pages)}", True, (200, 200, 200)), (box_rect.x + 20, box_rect.bottom + 140))
     screen.blit(hint_font.render("Left/Right change section | Q back to map", True, (180, 180, 180)), (box_rect.x + 20, box_rect.bottom + 170))
@@ -576,14 +579,14 @@ def render_state():
         if gq.quiz_i < len(gq.quiz_questions_home):
             gq.draw_quiz_screen(screen, font, home.bg, gq.quiz_questions_home[gq.quiz_i], npc_name="Fedora")
             draw_main_player_dialog(screen)
-            screen.blit(pygame.transform.scale(fedora.img_down, (200, 200)), (500, 380))
+            screen.blit(pygame.transform.scale(fedora.img_left, (200, 200)), (500, 380))
         return
 
     if state == WISEMAN:
         if gq.quiz_i < len(gq.quiz_questions_wiseman):
             gq.draw_quiz_screen(screen, font, wiseman_tent.bg, gq.quiz_questions_wiseman[gq.quiz_i], npc_name="The Wise Man")
             draw_main_player_dialog(screen)
-            screen.blit(pygame.transform.scale(wiseman.img_down, (200, 200)), (500, 380))
+            screen.blit(pygame.transform.scale(wiseman.img_left, (200, 200)), (500, 380))
         return
 
     if state == CHAPTER2:
