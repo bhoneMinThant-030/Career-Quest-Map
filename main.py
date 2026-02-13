@@ -420,7 +420,7 @@ def wrap_text(text, max_width, local_font):
     return lines
 
 
-def set_state(new_state, spawn_pos=None, title=None, facing=None):
+def set_state(new_state, spawn_pos=None, title=None, facing=None, loading_ms=0):
     global state, show_analysis_overlay
     state = new_state
     if new_state == CHAPTER2 and analysis_payload and not analysis_overlay_seen:
@@ -448,6 +448,8 @@ def set_state(new_state, spawn_pos=None, title=None, facing=None):
         elif new_state in (GATE_SCENE_STATE, DRAGON_SCENE_STATE, INFO_SCENE_STATE):
             bg = active_portal_bg if active_portal_bg is not None else home.bg
         loading_screen(title, bg=bg)
+        if loading_ms and loading_ms > 0:
+            pygame.time.delay(int(loading_ms))
 
 
 def get_portal_option(index):
@@ -973,8 +975,7 @@ def handle_keydown_ch1(event):
         if not chapter2_unlocked:
             print("Finish Wise Man path first.")
             return
-        prefetch_all_gate_scenes()
-        set_state(CHAPTER2, (20, 240), "Chapter 2: The Portals", facing="right")
+        set_state(CHAPTER2, (20, 240), "Chapter 2: The Portals", facing="right", loading_ms=3000)
 
 
 def handle_chapter2_enter():
