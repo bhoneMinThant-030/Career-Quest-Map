@@ -116,7 +116,7 @@ education_rects = [
 
 clock = pygame.time.Clock()
 
-main_player = Player(x=GAME_WIDTH // 2, y=GAME_HEIGHT // 2, width=100, height=100, img_path="images/warrior/", speed=800)
+main_player = Player(x=GAME_WIDTH // 2, y=GAME_HEIGHT // 2, width=70, height=70, img_path="images/warrior/", speed=100)
 fedora = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100, img_path="images/fedora/", speed=80)
 wiseman = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100, img_path="images/wiseman/", speed=80)
 dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/dragonWarrior/", speed=0)
