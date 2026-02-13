@@ -11,6 +11,7 @@ from print_questions import generate_analysis, generate_gate_scene
 GATE_SCENE_STATE = "gate_scene"
 DRAGON_SCENE_STATE = "dragon_scene"
 INFO_SCENE_STATE = "info_scene"
+FINAL_SCENE_STATE = "final_scene"
 
 can_enter_home = False
 can_enter_wiseman = False
@@ -20,6 +21,7 @@ can_enter_portal2 = False
 can_enter_portal3 = False
 can_enter_dragon_warrior = False
 can_enter_info_hub = False
+can_enter_post_info_gate = False
 
 player_name = ""
 player_education_status = "Secondary School"
@@ -51,6 +53,7 @@ dragon_scene_i = 0
 dragon_met = False
 info_pages = []
 info_page_i = 0
+info_hub_exited_once = False
 
 DIALOG_PLAYER_POS = (130, 400)
 DIALOG_PLAYER_SIZE = (150, 150)
@@ -63,6 +66,7 @@ portal_interior_audio_path = None
 no_portal_audio_path = None
 dw_audio_path = None
 booth_audio_path = None
+final_scene_audio_path = None
 active_music_key = None
 
 pygame.init()
@@ -87,6 +91,8 @@ dw_scene_bg = pygame.image.load("images/dwScene.png")
 dw_scene_bg = pygame.transform.scale(dw_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
 quest_booth_interior_bg = pygame.image.load("images/questBoothInterior.png")
 quest_booth_interior_bg = pygame.transform.scale(quest_booth_interior_bg, (GAME_WIDTH, GAME_HEIGHT))
+final_scene_bg = pygame.image.load("images/FinalScene.png")
+final_scene_bg = pygame.transform.scale(final_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
 
 
 def _resolve_opening_audio():
@@ -177,8 +183,19 @@ def _resolve_booth_audio():
     return None
 
 
+def _resolve_final_scene_audio():
+    candidates = [
+        "finalSceneAudio.mp3",
+        os.path.join("audio", "finalSceneAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
 def init_audio():
-    global audio_enabled, opening_audio_path, house_audio_path, wiseman_audio_path, chapter2_audio_path, portal_interior_audio_path, no_portal_audio_path, dw_audio_path, booth_audio_path
+    global audio_enabled, opening_audio_path, house_audio_path, wiseman_audio_path, chapter2_audio_path, portal_interior_audio_path, no_portal_audio_path, dw_audio_path, booth_audio_path, final_scene_audio_path
     opening_audio_path = _resolve_opening_audio()
     house_audio_path = _resolve_house_audio()
     wiseman_audio_path = _resolve_wiseman_audio()
@@ -187,6 +204,7 @@ def init_audio():
     no_portal_audio_path = _resolve_no_portal_audio()
     dw_audio_path = _resolve_dw_audio()
     booth_audio_path = _resolve_booth_audio()
+    final_scene_audio_path = _resolve_final_scene_audio()
     if opening_audio_path is None:
         print("Audio file not found: openingSceneAudio.mp3")
     if house_audio_path is None:
@@ -203,7 +221,9 @@ def init_audio():
         print("Audio file not found: dwAudio.mp3")
     if booth_audio_path is None:
         print("Audio file not found: boothAudio.mp3")
-    if opening_audio_path is None and house_audio_path is None and wiseman_audio_path is None and chapter2_audio_path is None and portal_interior_audio_path is None and no_portal_audio_path is None and dw_audio_path is None and booth_audio_path is None:
+    if final_scene_audio_path is None:
+        print("Audio file not found: finalSceneAudio.mp3")
+    if opening_audio_path is None and house_audio_path is None and wiseman_audio_path is None and chapter2_audio_path is None and portal_interior_audio_path is None and no_portal_audio_path is None and dw_audio_path is None and booth_audio_path is None and final_scene_audio_path is None:
         audio_enabled = False
         return
     try:
@@ -260,6 +280,11 @@ def set_background_music(music_key):
             if booth_audio_path is None:
                 return
             pygame.mixer.music.load(booth_audio_path)
+            pygame.mixer.music.play(-1)
+        elif music_key == "final_scene":
+            if final_scene_audio_path is None:
+                return
+            pygame.mixer.music.load(final_scene_audio_path)
             pygame.mixer.music.play(-1)
         else:
             pygame.mixer.music.stop()
@@ -336,6 +361,7 @@ portal1 = Structure(GAME_WIDTH - 572, GAME_HEIGHT - 480, 65, 80, "images/1stGate
 portal2 = Structure(GAME_WIDTH - 472, GAME_HEIGHT - 480, 30, 80, "images/2ndGate.png", "images/innerG2.png")
 portal3 = Structure(GAME_WIDTH - 410, GAME_HEIGHT - 480, 30, 80, "images/3rdGate.png", "images/innerG3.png")
 info_hub = Structure(GAME_WIDTH - 220, GAME_HEIGHT - 350, 100, 100, "images/questBooth.png", "images/home_bg.png")
+post_info_exit_gate = Structure(GAME_WIDTH - 470, GAME_HEIGHT - 80, 70, 70, "images/gate.png", "images/home_bg.png")
 
 WISEMAN_RETURN_SPAWN = (620, 390)
 
@@ -349,14 +375,14 @@ OUTSIDE_BLOCKED_RECTS = [
     pygame.Rect(440, 150, 50, 50),
     pygame.Rect(500, 200, 30, 20),
     pygame.Rect(600, 220, 250, 100),
-    pygame.Rect(570, 320, 250, 50),
+    pygame.Rect(570, 320, 250, 10),
 
     pygame.Rect(0, 320, 150, 100),
     pygame.Rect(150, 350, 80, 100),
     pygame.Rect(230, 320, 50, 200),
 
-    pygame.Rect(280, 320, 50, 50),
-    pygame.Rect(375, 300, 30, 10),
+    pygame.Rect(280, 320, 100, 50),
+    #pygame.Rect(375, 300, 30, 10),
     pygame.Rect(410, 340, 10, 20),
     pygame.Rect(280, 460, 220, 200),
     pygame.Rect(480, 320, 5, 5),
@@ -542,19 +568,19 @@ def draw_main_player_dialog(surface, pos=DIALOG_PLAYER_POS, size=DIALOG_PLAYER_S
 
 def draw_structure_label(surface, structure, text):
     label_text = str(text)
-    max_width = 100 if structure in (portal1, portal2, portal3) else None
-    font_size = 16 if structure in (portal1, portal2, portal3) else 20
+    max_width = 85 if structure in (portal1, portal2, portal3) else None
+    font_size = 15 if structure in (portal1, portal2, portal3) else 20
 
     cx = structure.rect.centerx
     top_y = structure.rect.y
     if structure == portal1:
-        cx -= 26
-        top_y -= 6
+        cx -= 58
+        top_y -= 8
     elif structure == portal2:
-        top_y -= 30
+        top_y -= 55
     elif structure == portal3:
-        cx += 26
-        top_y -= 6
+        cx += 58
+        top_y -= 8
 
     draw_name_tag(surface, label_text, cx, top_y, max_width=max_width, font_size=font_size)
 
@@ -883,10 +909,15 @@ def render_state():
             if dragon_met:
                 info_hub.draw(screen)
                 draw_structure_label(screen, info_hub, "Info Hub")
-            if can_enter_dragon_warrior:
-                draw_enter_prompt(screen, dragon_warrior.rect)
+            if info_hub_exited_once:
+                post_info_exit_gate.draw(screen)
+                draw_structure_label(screen, post_info_exit_gate, "Exit Gate")
+            if can_enter_post_info_gate:
+                draw_enter_prompt(screen, post_info_exit_gate.rect)
             elif can_enter_info_hub:
                 draw_enter_prompt(screen, info_hub.rect)
+            elif can_enter_dragon_warrior:
+                draw_enter_prompt(screen, dragon_warrior.rect)
         if SHOW_COLLISION_DEBUG:
             draw_blocked_rects_debug()
         draw_chapter2_labels()
@@ -905,6 +936,19 @@ def render_state():
 
     if state == INFO_SCENE_STATE:
         render_info_scene()
+        return
+
+    if state == FINAL_SCENE_STATE:
+        screen.blit(final_scene_bg, (0, 0))
+        shade = pygame.Surface((GAME_WIDTH, GAME_HEIGHT), pygame.SRCALPHA)
+        shade.fill((0, 0, 0, 70))
+        screen.blit(shade, (0, 0))
+        end_font = pygame.font.SysFont("Arial", 30, bold=True)
+        hint_font = pygame.font.SysFont("Arial", 24)
+        msg = end_font.render("Victory! Your journey is complete.", True, WHITE)
+        hint = hint_font.render("Press Q or ESC to quit.", True, WHITE)
+        screen.blit(msg, (GAME_WIDTH // 2 - msg.get_width() // 2, 40))
+        screen.blit(hint, (GAME_WIDTH // 2 - hint.get_width() // 2, 78))
         return
 
     if state == PROFILE:
@@ -941,19 +985,21 @@ def update_outside_interactions():
 
 
 def update_chapter2_interactions():
-    global can_enter_portal1, can_enter_portal2, can_enter_portal3, can_enter_dragon_warrior, can_enter_info_hub
+    global can_enter_portal1, can_enter_portal2, can_enter_portal3, can_enter_dragon_warrior, can_enter_info_hub, can_enter_post_info_gate
     if path_committed:
         can_enter_portal1 = False
         can_enter_portal2 = False
         can_enter_portal3 = False
-        can_enter_dragon_warrior = main_player.rect.colliderect(dragon_warrior.rect.inflate(50, 50))
+        can_enter_dragon_warrior = main_player.rect.colliderect(dragon_warrior.rect.inflate(30, 30))
         can_enter_info_hub = dragon_met and main_player.rect.colliderect(info_hub.rect.inflate(40, 40))
+        can_enter_post_info_gate = info_hub_exited_once and main_player.rect.colliderect(post_info_exit_gate.rect.inflate(50, 50))
         return
     can_enter_portal1 = main_player.rect.colliderect(portal1.rect.inflate(40, 40))
     can_enter_portal2 = main_player.rect.colliderect(portal2.rect.inflate(40, 40))
     can_enter_portal3 = main_player.rect.colliderect(portal3.rect.inflate(40, 40))
     can_enter_dragon_warrior = False
     can_enter_info_hub = False
+    can_enter_post_info_gate = False
 
 
 def get_blocked_rects_for_state():
@@ -970,6 +1016,8 @@ def get_blocked_rects_for_state():
         else:
             if dragon_met:
                 blocked.append(info_hub.rect)
+            if info_hub_exited_once:
+                blocked.append(post_info_exit_gate.rect)
     return blocked
 
 
@@ -999,6 +1047,8 @@ def draw_blocked_rects_debug():
             pygame.draw.rect(screen, (80, 180, 255), portal3.rect, 2)
         elif dragon_met:
             pygame.draw.rect(screen, (80, 180, 255), info_hub.rect, 2)
+            if info_hub_exited_once:
+                pygame.draw.rect(screen, (80, 180, 255), post_info_exit_gate.rect, 2)
 
 
 def prefetch_all_gate_scenes():
@@ -1211,6 +1261,8 @@ while running:
         set_background_music("dw")
     elif state == INFO_SCENE_STATE:
         set_background_music("booth")
+    elif state == FINAL_SCENE_STATE:
+        set_background_music("final_scene")
     else:
         set_background_music(None)
 
@@ -1278,6 +1330,7 @@ while running:
                                     path_committed = False
                                     committed_path_option = None
                                     dragon_met = False
+                                    info_hub_exited_once = False
                                     chapter2_unlocked = True
                                     analysis_overlay_seen = False
                                     show_analysis_overlay = False
@@ -1303,7 +1356,9 @@ while running:
                     analysis_overlay_seen = True
                 elif event.key == pygame.K_e and not show_analysis_overlay:
                     if path_committed:
-                        if can_enter_info_hub:
+                        if can_enter_post_info_gate:
+                            set_state(FINAL_SCENE_STATE, title="Final Chapter: Victory")
+                        elif can_enter_info_hub:
                             handle_info_hub_enter()
                         else:
                             handle_dragon_warrior_enter()
@@ -1350,11 +1405,15 @@ while running:
                     dragon_scene_i = min(max(0, len(dragon_scene_lines) - 1), dragon_scene_i + 1)
             elif state == INFO_SCENE_STATE:
                 if event.key == pygame.K_q:
+                    info_hub_exited_once = True
                     set_state(CHAPTER2, INFO_HUB_EXIT_SPAWN, facing="left")
                 elif event.key == pygame.K_LEFT:
                     info_page_i = max(0, info_page_i - 1)
                 elif event.key == pygame.K_RIGHT:
                     info_page_i = min(max(0, len(info_pages) - 1), info_page_i + 1)
+            elif state == FINAL_SCENE_STATE:
+                if event.key in (pygame.K_q, pygame.K_ESCAPE):
+                    running = False
 
     if state != PROFILE and state not in (HOME, WISEMAN):
         pygame_widgets.update(events)
