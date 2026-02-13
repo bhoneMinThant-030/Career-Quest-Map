@@ -333,9 +333,9 @@ home = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 585, 150, 150, "images/house.pn
 wiseman_tent = Structure(GAME_WIDTH - 220, GAME_HEIGHT - 210, 65, 65, "images/wiseman/west.png", "images/TreeScene.png")
 exit_gate1 = Structure(GAME_WIDTH - 388, GAME_HEIGHT - 115, 60, 60, "images/gate.png", "images/home_bg.png")
 portal1 = Structure(GAME_WIDTH - 572, GAME_HEIGHT - 480, 65, 80, "images/1stGate.png", "images/innerG1.png")
-portal2 = Structure(GAME_WIDTH - 482, GAME_HEIGHT - 480, 65, 80, "images/2ndGate.png", "images/innerG2.png")
-portal3 = Structure(GAME_WIDTH - 392, GAME_HEIGHT - 480, 65, 80, "images/3rdGate.png", "images/innerG3.png")
-info_hub = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 420, 100, 100, "images/questBooth.png", "images/home_bg.png")
+portal2 = Structure(GAME_WIDTH - 472, GAME_HEIGHT - 480, 30, 80, "images/2ndGate.png", "images/innerG2.png")
+portal3 = Structure(GAME_WIDTH - 410, GAME_HEIGHT - 480, 30, 80, "images/3rdGate.png", "images/innerG3.png")
+info_hub = Structure(GAME_WIDTH - 220, GAME_HEIGHT - 350, 100, 100, "images/questBooth.png", "images/home_bg.png")
 
 WISEMAN_RETURN_SPAWN = (620, 390)
 
@@ -349,7 +349,7 @@ OUTSIDE_BLOCKED_RECTS = [
     pygame.Rect(440, 150, 50, 50),
     pygame.Rect(500, 200, 30, 20),
     pygame.Rect(600, 220, 250, 100),
-    pygame.Rect(550, 320, 250, 50),
+    pygame.Rect(570, 320, 250, 50),
 
     pygame.Rect(0, 320, 150, 100),
     pygame.Rect(150, 350, 80, 100),
@@ -368,7 +368,15 @@ OUTSIDE_BLOCKED_RECTS = [
 ]
 
 CHAPTER2_BLOCKED_RECTS = [
-    pygame.Rect(0, 0, 480, 150),
+    pygame.Rect(0, 0, GAME_WIDTH, 180),
+    pygame.Rect(0, 150, 300, 100),
+    pygame.Rect(300, 150, 100, 120),
+    pygame.Rect(530, 210, 100, 50),
+    
+    pygame.Rect(0, 330, 410, 300),
+    pygame.Rect(490, 330, 380, 250),
+
+    pygame.Rect(780, 180, 50, 150)
 ]
 blocked_rects_by_state = {
     OUTSIDE: OUTSIDE_BLOCKED_RECTS,
@@ -386,15 +394,15 @@ def _spawn_near(rect, dx=0, dy=70):
 
 
 HOME_EXIT_SPAWN = _spawn_near(home.rect, dx=-180, dy=-50)
-WISEMAN_EXIT_SPAWN = _spawn_near(wiseman_tent.rect, dx=-90, dy=-90)
+WISEMAN_EXIT_SPAWN = _spawn_near(wiseman_tent.rect, dx=-110, dy=-40)
 CH1_GATE_EXIT_SPAWN = _spawn_near(exit_gate1.rect, dx=-40, dy=10)
 PORTAL_EXIT_SPAWNS = {
-    0: _spawn_near(portal1.rect, dx=0, dy=30),
-    1: _spawn_near(portal2.rect, dx=0, dy=30),
-    2: _spawn_near(portal3.rect, dx=0, dy=30),
+    0: _spawn_near(portal1.rect, dx=60, dy=60),
+    1: _spawn_near(portal2.rect, dx=-15, dy=60),
+    2: _spawn_near(portal3.rect, dx=-70, dy=60),
 }
 DRAGON_EXIT_SPAWN = _spawn_near(dragon_warrior.rect, dx=-60, dy=20)
-INFO_HUB_EXIT_SPAWN = _spawn_near(info_hub.rect, dx=0, dy=20)
+INFO_HUB_EXIT_SPAWN = _spawn_near(info_hub.rect, dx=-100, dy=-85)
 
 
 def loading_screen(title, bg=None):
@@ -957,8 +965,6 @@ def get_blocked_rects_for_state():
         blocked.append(home.rect)
         if part1_done:
             blocked.append(wiseman_tent.rect)
-        if chapter2_unlocked:
-            blocked.append(exit_gate1.rect)
     elif state == CHAPTER2:
         if not path_committed:
             blocked.extend([portal1.rect, portal2.rect, portal3.rect])
@@ -1042,7 +1048,7 @@ def handle_keydown_ch1(event):
         if not chapter2_unlocked:
             print("Finish Wise Man path first.")
             return
-        set_state(CHAPTER2, (20, 240), "Chapter 2: The Portals", facing="right", loading_ms=3000)
+        set_state(CHAPTER2, (20, 260), "Chapter 2: The Portals", facing="right", loading_ms=3000)
 
 
 def handle_chapter2_enter():
