@@ -339,6 +339,43 @@ info_hub = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 420, 100, 100, "images/ques
 
 WISEMAN_RETURN_SPAWN = (620, 390)
 
+# Static map blockers (manual rectangles). Add/adjust these over time.
+# Example: pygame.Rect(x, y, width, height)
+OUTSIDE_BLOCKED_RECTS = [
+    pygame.Rect(0, 0, 480, 150),
+    pygame.Rect(0, 150, 150, 100),
+    pygame.Rect(150, 150, 130, 50),
+    pygame.Rect(250, 200, 140, 40),
+    pygame.Rect(440, 150, 50, 50),
+    pygame.Rect(500, 200, 30, 20),
+    pygame.Rect(600, 220, 250, 100),
+    pygame.Rect(550, 320, 250, 50),
+
+    pygame.Rect(0, 320, 150, 100),
+    pygame.Rect(150, 350, 80, 100),
+    pygame.Rect(230, 320, 50, 200),
+
+    pygame.Rect(280, 320, 50, 50),
+    pygame.Rect(375, 300, 30, 10),
+    pygame.Rect(410, 340, 10, 20),
+    pygame.Rect(280, 460, 220, 200),
+    pygame.Rect(480, 320, 5, 5),
+
+    pygame.Rect(280, 460, 220, 200),
+    pygame.Rect(600, 480, 50, 100),
+    pygame.Rect(650, 510, 180, 50),
+    pygame.Rect(750, 310, 80, 200),
+]
+
+CHAPTER2_BLOCKED_RECTS = [
+    pygame.Rect(0, 0, 480, 150),
+]
+blocked_rects_by_state = {
+    OUTSIDE: OUTSIDE_BLOCKED_RECTS,
+    CHAPTER2: CHAPTER2_BLOCKED_RECTS,
+}
+SHOW_COLLISION_DEBUG = True
+
 
 def _spawn_near(rect, dx=0, dy=70):
     x = rect.centerx + dx
@@ -798,6 +835,8 @@ def render_state():
             draw_enter_prompt(screen, wiseman_tent.rect)
         elif can_enter_exit_gate:
             draw_enter_prompt(screen, exit_gate1.rect)
+        if SHOW_COLLISION_DEBUG:
+            draw_blocked_rects_debug()
         render_outside_quest_hint()
         draw_main_player(screen)
         return
@@ -841,6 +880,8 @@ def render_state():
                 draw_enter_prompt(screen, dragon_warrior.rect)
             elif can_enter_info_hub:
                 draw_enter_prompt(screen, info_hub.rect)
+        if SHOW_COLLISION_DEBUG:
+            draw_blocked_rects_debug()
         draw_chapter2_labels()
         draw_main_player(screen)
         if show_analysis_overlay:
@@ -908,25 +949,51 @@ def update_chapter2_interactions():
     can_enter_info_hub = False
 
 
-def resolve_structure_collision(prev_pos):
-    blocked_rects = []
+def get_blocked_rects_for_state():
+    blocked = list(blocked_rects_by_state.get(state, []))
 
+    # Dynamic blockers based on progression/scene.
     if state == OUTSIDE:
-        blocked_rects.append(home.rect)
+        blocked.append(home.rect)
         if part1_done:
-            blocked_rects.append(wiseman_tent.rect)
+            blocked.append(wiseman_tent.rect)
         if chapter2_unlocked:
-            blocked_rects.append(exit_gate1.rect)
+            blocked.append(exit_gate1.rect)
     elif state == CHAPTER2:
         if not path_committed:
-            blocked_rects.extend([portal1.rect, portal2.rect, portal3.rect])
-        elif dragon_met:
-            blocked_rects.append(info_hub.rect)
+            blocked.extend([portal1.rect, portal2.rect, portal3.rect])
+        else:
+            if dragon_met:
+                blocked.append(info_hub.rect)
+    return blocked
 
-    for rect in blocked_rects:
+
+def resolve_world_collision(prev_pos):
+    for rect in get_blocked_rects_for_state():
         if main_player.rect.colliderect(rect):
             main_player.rect.topleft = prev_pos
             break
+
+
+def draw_blocked_rects_debug():
+    # Static blockers from manual state lists
+    for r in blocked_rects_by_state.get(state, []):
+        pygame.draw.rect(screen, (255, 80, 80), r, 2)  # red
+
+    # Dynamic blockers added by progression/state
+    if state == OUTSIDE:
+        pygame.draw.rect(screen, (80, 180, 255), home.rect, 2)  # blue
+        if part1_done:
+            pygame.draw.rect(screen, (80, 180, 255), wiseman_tent.rect, 2)
+        if chapter2_unlocked:
+            pygame.draw.rect(screen, (80, 180, 255), exit_gate1.rect, 2)
+    elif state == CHAPTER2:
+        if not path_committed:
+            pygame.draw.rect(screen, (80, 180, 255), portal1.rect, 2)
+            pygame.draw.rect(screen, (80, 180, 255), portal2.rect, 2)
+            pygame.draw.rect(screen, (80, 180, 255), portal3.rect, 2)
+        elif dragon_met:
+            pygame.draw.rect(screen, (80, 180, 255), info_hub.rect, 2)
 
 
 def prefetch_all_gate_scenes():
@@ -1290,13 +1357,13 @@ while running:
     if state == OUTSIDE:
         prev_pos = main_player.rect.topleft
         main_player.move(dt, GAME_WIDTH, GAME_HEIGHT)
-        resolve_structure_collision(prev_pos)
+        resolve_world_collision(prev_pos)
         update_outside_interactions()
     elif state == CHAPTER2:
         if not show_analysis_overlay:
             prev_pos = main_player.rect.topleft
             main_player.move(dt, GAME_WIDTH, GAME_HEIGHT)
-            resolve_structure_collision(prev_pos)
+            resolve_world_collision(prev_pos)
             update_chapter2_interactions()
 
     render_state()

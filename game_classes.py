@@ -6,7 +6,7 @@ import re
 GAME_WIDTH = 900
 GAME_HEIGHT = 600
 
-OUTSIDE_SPAWN = (50, 220)
+OUTSIDE_SPAWN = (0, 260)
 HOME_SPAWN    = (100, 300)
 
 # Colors 
