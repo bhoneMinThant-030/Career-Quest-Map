@@ -329,7 +329,7 @@ wiseman = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100,
 dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=150, height=150, img_path="images/dragonWarrior/", speed=0)
 aung_gyi = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/aungGyi/", speed=0)
 
-home = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 585, 200, 200, "images/house.png", "images/home_bg.png")
+home = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 585, 150, 150, "images/house.png", "images/home_bg.png")
 wiseman_tent = Structure(GAME_WIDTH - 220, GAME_HEIGHT - 210, 65, 65, "images/wiseman/west.png", "images/TreeScene.png")
 exit_gate1 = Structure(GAME_WIDTH - 388, GAME_HEIGHT - 115, 60, 60, "images/gate.png", "images/home_bg.png")
 portal1 = Structure(GAME_WIDTH - 572, GAME_HEIGHT - 480, 65, 80, "images/1stGate.png", "images/innerG1.png")
@@ -511,6 +511,22 @@ def draw_structure_label(surface, structure, text):
         top_y -= 6
 
     draw_name_tag(surface, label_text, cx, top_y, max_width=max_width, font_size=font_size)
+
+
+def draw_enter_prompt(surface, target_rect, text="Press E to Enter"):
+    prompt_font = pygame.font.SysFont("Arial", 20, bold=True)
+    label = prompt_font.render(text, True, WHITE)
+    pad_x, pad_y = 10, 6
+    box_w = label.get_width() + pad_x * 2
+    box_h = label.get_height() + pad_y * 2
+    x = target_rect.centerx - box_w // 2
+    y = target_rect.centery - box_h // 2
+    x = max(8, min(GAME_WIDTH - box_w - 8, x))
+    y = max(8, y)
+    panel = pygame.Rect(x, y, box_w, box_h)
+    pygame.draw.rect(surface, (0, 0, 0, 185), panel, border_radius=10)
+    pygame.draw.rect(surface, WHITE, panel, 2, border_radius=10)
+    surface.blit(label, (panel.x + pad_x, panel.y + pad_y))
 
 
 def draw_chapter2_labels():
@@ -774,6 +790,12 @@ def render_state():
         if chapter2_unlocked:
             exit_gate1.draw(screen)
             draw_structure_label(screen, exit_gate1, "Chapter Gate")
+        if can_enter_home:
+            draw_enter_prompt(screen, home.rect)
+        elif can_enter_wiseman:
+            draw_enter_prompt(screen, wiseman_tent.rect)
+        elif can_enter_exit_gate:
+            draw_enter_prompt(screen, exit_gate1.rect)
         render_outside_quest_hint()
         draw_main_player(screen)
         return
@@ -801,12 +823,22 @@ def render_state():
             draw_structure_label(screen, portal1, get_portal_option(0))
             draw_structure_label(screen, portal2, get_portal_option(1))
             draw_structure_label(screen, portal3, get_portal_option(2))
+            if can_enter_portal1:
+                draw_enter_prompt(screen, portal1.rect)
+            elif can_enter_portal2:
+                draw_enter_prompt(screen, portal2.rect)
+            elif can_enter_portal3:
+                draw_enter_prompt(screen, portal3.rect)
         else:
             dragon_warrior.draw(screen)
             draw_structure_label(screen, dragon_warrior, "Dragon Warrior")
             if dragon_met:
                 info_hub.draw(screen)
                 draw_structure_label(screen, info_hub, "Info Hub")
+            if can_enter_dragon_warrior:
+                draw_enter_prompt(screen, dragon_warrior.rect)
+            elif can_enter_info_hub:
+                draw_enter_prompt(screen, info_hub.rect)
         draw_chapter2_labels()
         draw_main_player(screen)
         if show_analysis_overlay:
@@ -853,9 +885,9 @@ def render_state():
 
 def update_outside_interactions():
     global can_enter_home, can_enter_wiseman, can_enter_exit_gate
-    can_enter_home = main_player.rect.colliderect(home.rect)
-    can_enter_wiseman = part1_done and main_player.rect.colliderect(wiseman_tent.rect)
-    can_enter_exit_gate = chapter2_unlocked and main_player.rect.colliderect(exit_gate1.rect)
+    can_enter_home = main_player.rect.colliderect(home.rect.inflate(40, 40))
+    can_enter_wiseman = part1_done and main_player.rect.colliderect(wiseman_tent.rect.inflate(40, 40))
+    can_enter_exit_gate = chapter2_unlocked and main_player.rect.colliderect(exit_gate1.rect.inflate(40, 40))
 
 
 def update_chapter2_interactions():
@@ -864,14 +896,35 @@ def update_chapter2_interactions():
         can_enter_portal1 = False
         can_enter_portal2 = False
         can_enter_portal3 = False
-        can_enter_dragon_warrior = main_player.rect.colliderect(dragon_warrior.rect)
-        can_enter_info_hub = dragon_met and main_player.rect.colliderect(info_hub.rect)
+        can_enter_dragon_warrior = main_player.rect.colliderect(dragon_warrior.rect.inflate(50, 50))
+        can_enter_info_hub = dragon_met and main_player.rect.colliderect(info_hub.rect.inflate(40, 40))
         return
-    can_enter_portal1 = main_player.rect.colliderect(portal1.rect)
-    can_enter_portal2 = main_player.rect.colliderect(portal2.rect)
-    can_enter_portal3 = main_player.rect.colliderect(portal3.rect)
+    can_enter_portal1 = main_player.rect.colliderect(portal1.rect.inflate(40, 40))
+    can_enter_portal2 = main_player.rect.colliderect(portal2.rect.inflate(40, 40))
+    can_enter_portal3 = main_player.rect.colliderect(portal3.rect.inflate(40, 40))
     can_enter_dragon_warrior = False
     can_enter_info_hub = False
+
+
+def resolve_structure_collision(prev_pos):
+    blocked_rects = []
+
+    if state == OUTSIDE:
+        blocked_rects.append(home.rect)
+        if part1_done:
+            blocked_rects.append(wiseman_tent.rect)
+        if chapter2_unlocked:
+            blocked_rects.append(exit_gate1.rect)
+    elif state == CHAPTER2:
+        if not path_committed:
+            blocked_rects.extend([portal1.rect, portal2.rect, portal3.rect])
+        elif dragon_met:
+            blocked_rects.append(info_hub.rect)
+
+    for rect in blocked_rects:
+        if main_player.rect.colliderect(rect):
+            main_player.rect.topleft = prev_pos
+            break
 
 
 def prefetch_all_gate_scenes():
@@ -1234,11 +1287,15 @@ while running:
         pygame_widgets.update(events)
 
     if state == OUTSIDE:
+        prev_pos = main_player.rect.topleft
         main_player.move(dt, GAME_WIDTH, GAME_HEIGHT)
+        resolve_structure_collision(prev_pos)
         update_outside_interactions()
     elif state == CHAPTER2:
         if not show_analysis_overlay:
+            prev_pos = main_player.rect.topleft
             main_player.move(dt, GAME_WIDTH, GAME_HEIGHT)
+            resolve_structure_collision(prev_pos)
             update_chapter2_interactions()
 
     render_state()
