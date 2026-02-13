@@ -56,6 +56,13 @@ DIALOG_PLAYER_POS = (130, 400)
 DIALOG_PLAYER_SIZE = (150, 150)
 audio_enabled = False
 opening_audio_path = None
+house_audio_path = None
+wiseman_audio_path = None
+chapter2_audio_path = None
+portal_interior_audio_path = None
+no_portal_audio_path = None
+dw_audio_path = None
+booth_audio_path = None
 active_music_key = None
 
 pygame.init()
@@ -78,6 +85,8 @@ first_scene_bg = pygame.image.load("images/FirstScene.png")
 first_scene_bg = pygame.transform.scale(first_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
 dw_scene_bg = pygame.image.load("images/dwScene.png")
 dw_scene_bg = pygame.transform.scale(dw_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
+quest_booth_interior_bg = pygame.image.load("images/questBoothInterior.png")
+quest_booth_interior_bg = pygame.transform.scale(quest_booth_interior_bg, (GAME_WIDTH, GAME_HEIGHT))
 
 
 def _resolve_opening_audio():
@@ -91,15 +100,114 @@ def _resolve_opening_audio():
     return None
 
 
+def _resolve_house_audio():
+    candidates = [
+        "houseAudio.mp3",
+        os.path.join("audio", "houseAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def _resolve_wiseman_audio():
+    candidates = [
+        "wiseManAudio.mp3",
+        os.path.join("audio", "wiseManAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def _resolve_chapter2_audio():
+    candidates = [
+        "seenPortalAudio.mp3",
+        os.path.join("audio", "seenPortalAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def _resolve_portal_interior_audio():
+    candidates = [
+        "portalInteriorAudio.mp3",
+        os.path.join("audio", "portalInteriorAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def _resolve_no_portal_audio():
+    candidates = [
+        "noPortalAudio.mp3",
+        os.path.join("audio", "noPortalAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def _resolve_dw_audio():
+    candidates = [
+        "dwAudio.mp3",
+        os.path.join("audio", "dwAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def _resolve_booth_audio():
+    candidates = [
+        "boothAudio.mp3",
+        os.path.join("audio", "boothAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
 def init_audio():
-    global audio_enabled, opening_audio_path
+    global audio_enabled, opening_audio_path, house_audio_path, wiseman_audio_path, chapter2_audio_path, portal_interior_audio_path, no_portal_audio_path, dw_audio_path, booth_audio_path
     opening_audio_path = _resolve_opening_audio()
+    house_audio_path = _resolve_house_audio()
+    wiseman_audio_path = _resolve_wiseman_audio()
+    chapter2_audio_path = _resolve_chapter2_audio()
+    portal_interior_audio_path = _resolve_portal_interior_audio()
+    no_portal_audio_path = _resolve_no_portal_audio()
+    dw_audio_path = _resolve_dw_audio()
+    booth_audio_path = _resolve_booth_audio()
     if opening_audio_path is None:
         print("Audio file not found: openingSceneAudio.mp3")
+    if house_audio_path is None:
+        print("Audio file not found: houseAudio.mp3")
+    if wiseman_audio_path is None:
+        print("Audio file not found: wiseManAudio.mp3")
+    if chapter2_audio_path is None:
+        print("Audio file not found: seenPortalAudio.mp3")
+    if portal_interior_audio_path is None:
+        print("Audio file not found: portalInteriorAudio.mp3")
+    if no_portal_audio_path is None:
+        print("Audio file not found: noPortalAudio.mp3")
+    if dw_audio_path is None:
+        print("Audio file not found: dwAudio.mp3")
+    if booth_audio_path is None:
+        print("Audio file not found: boothAudio.mp3")
+    if opening_audio_path is None and house_audio_path is None and wiseman_audio_path is None and chapter2_audio_path is None and portal_interior_audio_path is None and no_portal_audio_path is None and dw_audio_path is None and booth_audio_path is None:
         audio_enabled = False
         return
     try:
-        pygame.mixer.music.set_volume(0.45)
+        pygame.mixer.music.set_volume(1.0)
         audio_enabled = True
     except Exception as audio_err:
         print(f"Audio disabled: {audio_err}")
@@ -117,6 +225,41 @@ def set_background_music(music_key):
             if opening_audio_path is None:
                 return
             pygame.mixer.music.load(opening_audio_path)
+            pygame.mixer.music.play(-1)
+        elif music_key == "house":
+            if house_audio_path is None:
+                return
+            pygame.mixer.music.load(house_audio_path)
+            pygame.mixer.music.play(-1)
+        elif music_key == "wiseman":
+            if wiseman_audio_path is None:
+                return
+            pygame.mixer.music.load(wiseman_audio_path)
+            pygame.mixer.music.play(-1)
+        elif music_key == "chapter2":
+            if chapter2_audio_path is None:
+                return
+            pygame.mixer.music.load(chapter2_audio_path)
+            pygame.mixer.music.play(-1)
+        elif music_key == "portal_interior":
+            if portal_interior_audio_path is None:
+                return
+            pygame.mixer.music.load(portal_interior_audio_path)
+            pygame.mixer.music.play(-1)
+        elif music_key == "chapter2_no_portal":
+            if no_portal_audio_path is None:
+                return
+            pygame.mixer.music.load(no_portal_audio_path)
+            pygame.mixer.music.play(-1)
+        elif music_key == "dw":
+            if dw_audio_path is None:
+                return
+            pygame.mixer.music.load(dw_audio_path)
+            pygame.mixer.music.play(-1)
+        elif music_key == "booth":
+            if booth_audio_path is None:
+                return
+            pygame.mixer.music.load(booth_audio_path)
             pygame.mixer.music.play(-1)
         else:
             pygame.mixer.music.stop()
@@ -580,7 +723,7 @@ def render_dragon_scene():
 
 
 def render_info_scene():
-    bg = dw_scene_bg
+    bg = quest_booth_interior_bg
     screen.blit(bg, (0, 0))
     box_rect = pygame.Rect(40, 50, 720, 330)
     gq.draw_dialog_box(screen, box_rect, fill_color=(10, 10, 10), alpha=210, border_color=(255, 255, 255))
@@ -605,7 +748,6 @@ def render_info_scene():
             break
 
     draw_main_player_dialog(screen)
-    screen.blit(pygame.transform.scale(dragon_warrior.img_left, (200, 200)), (500, 380))
 
     screen.blit(hint_font.render(f"Page {info_page_i + 1}/{len(info_pages)}", True, (200, 200, 200)), (box_rect.x + 20, box_rect.bottom + 140))
     screen.blit(hint_font.render("Left/Right change section | Q back to map", True, (180, 180, 180)), (box_rect.x + 20, box_rect.bottom + 170))
@@ -931,6 +1073,18 @@ while running:
 
     if state in (PROFILE, OUTSIDE):
         set_background_music("opening")
+    elif state == HOME:
+        set_background_music("house")
+    elif state == WISEMAN:
+        set_background_music("wiseman")
+    elif state == CHAPTER2:
+        set_background_music("chapter2_no_portal" if path_committed else "chapter2")
+    elif state == GATE_SCENE_STATE:
+        set_background_music("portal_interior")
+    elif state == DRAGON_SCENE_STATE:
+        set_background_music("dw")
+    elif state == INFO_SCENE_STATE:
+        set_background_music("booth")
     else:
         set_background_music(None)
 
