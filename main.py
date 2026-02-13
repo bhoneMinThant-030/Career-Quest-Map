@@ -469,7 +469,7 @@ def render_state():
 
     if state == WISEMAN:
         if gq.quiz_i < len(gq.quiz_questions_wiseman):
-            gq.draw_quiz_screen(screen, font, home.bg, gq.quiz_questions_wiseman[gq.quiz_i], npc_name="The Wise Man")
+            gq.draw_quiz_screen(screen, font, wiseman_tent.bg, gq.quiz_questions_wiseman[gq.quiz_i], npc_name="The Wise Man")
             screen.blit(pygame.transform.scale(main_player.img_down, (250, 250)), (100, 360))
             screen.blit(pygame.transform.scale(wiseman.img_down, (200, 200)), (500, 380))
         return
@@ -740,7 +740,7 @@ while running:
                         if gq.quiz_done:
                             if state == HOME:
                                 part1_answers = gq.collect_answers_for_engine(gq.quiz_questions_home)
-                                loading_screen("Generating Part 2 questions...", bg=home.bg)
+                                loading_screen("Generating Part 2 questions...", bg=bg_img)
                                 try:
                                     gq.load_part2_dynamic_quizzes(education_status=player_education_status, part1_answers=part1_answers)
                                     part1_done = True
@@ -756,7 +756,7 @@ while running:
                                     inferred_fields = []
                                 player_poly_path_choice = get_poly_path_choice(part2_answers)
 
-                                loading_screen("Generating analysis...", bg=home.bg)
+                                loading_screen("Generating analysis...", bg=wiseman_tent.bg)
                                 try:
                                     analysis_payload = generate_analysis(
                                         education_status=player_education_status,
