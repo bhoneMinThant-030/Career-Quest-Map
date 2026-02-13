@@ -123,14 +123,14 @@ education_rects = [
 
 clock = pygame.time.Clock()
 
-main_player = Player(x=GAME_WIDTH // 2, y=GAME_HEIGHT // 2, width=70, height=70, img_path="images/warrior/", speed=100)
+main_player = Player(x=GAME_WIDTH // 2, y=GAME_HEIGHT // 2, width=50, height=50, img_path="images/warrior/", speed=100)
 fedora = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100, img_path="images/fedora/", speed=80)
 wiseman = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100, img_path="images/wiseman/", speed=80)
 dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=150, height=150, img_path="images/dragonWarrior/", speed=0)
 aung_gyi = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/aungGyi/", speed=0)
 
 home = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 585, 200, 200, "images/house.png", "images/home_bg.png")
-wiseman_tent = Structure(GAME_WIDTH - 220, GAME_HEIGHT - 210, 100, 100, "images/wiseman/west.png", "images/TreeScene.png")
+wiseman_tent = Structure(GAME_WIDTH - 220, GAME_HEIGHT - 210, 65, 65, "images/wiseman/west.png", "images/TreeScene.png")
 exit_gate1 = Structure(GAME_WIDTH - 388, GAME_HEIGHT - 115, 60, 60, "images/gate.png", "images/home_bg.png")
 portal1 = Structure(GAME_WIDTH - 572, GAME_HEIGHT - 480, 65, 80, "images/1stGate.png", "images/innerG1.png")
 portal2 = Structure(GAME_WIDTH - 482, GAME_HEIGHT - 480, 65, 80, "images/2ndGate.png", "images/innerG2.png")
