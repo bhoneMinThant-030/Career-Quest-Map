@@ -42,6 +42,7 @@ gate_scene_i = 0
 gate_yes_no_idx = 0
 gate_dragon_saved = {}
 active_portal_bg = None
+gates_prefetched = False
 path_committed = False
 committed_path_option = None
 dragon_scene_lines = []
@@ -60,6 +61,16 @@ bg_img = pygame.image.load("images/background.png")
 bg_img = pygame.transform.scale(bg_img, (GAME_WIDTH, GAME_HEIGHT))
 chapter2_bg = pygame.image.load("images/chapter2_bg.png")
 chapter2_bg = pygame.transform.scale(chapter2_bg, (GAME_WIDTH, GAME_HEIGHT))
+
+
+def _load_preferred_font(candidates, size, italic=False):
+    for name in candidates:
+        font_path = pygame.font.match_font(name, italic=italic)
+        if font_path:
+            return pygame.font.Font(font_path, size)
+    # Serif fallback if preferred fonts are unavailable.
+    fallback = "Times New Roman"
+    return pygame.font.SysFont(fallback, size, italic=italic)
 
 profile_name_box = TextBox(
     screen,
@@ -106,7 +117,8 @@ clock = pygame.time.Clock()
 main_player = Player(x=GAME_WIDTH // 2, y=GAME_HEIGHT // 2, width=100, height=100, img_path="images/warrior/", speed=800)
 fedora = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100, img_path="images/fedora/", speed=80)
 wiseman = Player(x=GAME_WIDTH - 400, y=GAME_HEIGHT - 200, width=100, height=100, img_path="images/wiseman/", speed=80)
-dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/wiseman/", speed=0)
+dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/dragonWarrior/", speed=0)
+aung_gyi = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100, img_path="images/aungGyi/", speed=0)
 
 home = Structure(GAME_WIDTH - 650, GAME_HEIGHT - 450, 200, 200, "images/house.png", "images/home_bg.png")
 wiseman_tent = Structure(GAME_WIDTH - 400, GAME_HEIGHT - 200, 100, 100, "images/wiseman/west.png", "images/TreeScene.png")
@@ -129,7 +141,19 @@ def loading_screen(title, bg=None):
     overlay.fill((0, 0, 0, 110))
     screen.blit(overlay, (0, 0))
 
-    text_lines = wrap_text(title, GAME_WIDTH - 240, font)
+    # Chapters use a decorative serif; story quotes use italic serif.
+    is_chapter_title = str(title).strip().lower().startswith("chapter")
+    loading_font = _load_preferred_font(
+        candidates=["Mantinia Regular", "Mantinia", "Cinzel", "Garamond", "Georgia"],
+        size=32,
+        italic=False,
+    ) if is_chapter_title else _load_preferred_font(
+        candidates=["Agmena", "Alegreya", "Palatino Linotype", "Georgia", "Garamond"],
+        size=32,
+        italic=True,
+    )
+
+    text_lines = wrap_text(title, GAME_WIDTH - 240, loading_font)
     if not text_lines:
         text_lines = [str(title)]
 
@@ -137,7 +161,7 @@ def loading_screen(title, bg=None):
     start_y = 260
     line_gap = 44
     for i, line in enumerate(text_lines):
-        txt = font.render(line, True, WHITE)
+        txt = loading_font.render(line, True, WHITE)
         screen.blit(txt, (start_x, start_y + i * line_gap))
     pygame.display.flip()
 
@@ -200,7 +224,7 @@ def draw_chapter2_labels():
     if path_committed:
         t1 = label_font.render(f"Chosen Path: {committed_path_option or 'Unknown'}", True, WHITE)
         t2 = label_font.render("Dragon Warrior has appeared.", True, WHITE)
-        t3 = label_font.render("Approach the warrior and press E for your quest.", True, WHITE)
+        t3 = label_font.render("Approach Dragon Warrior and press E for your quest.", True, WHITE)
         screen.blit(t1, (40, 24))
         screen.blit(t2, (40, 48))
         screen.blit(t3, (40, 72))
@@ -334,7 +358,7 @@ def build_info_pages():
 
 def _strip_speaker_prefix(text):
     s = str(text)
-    prefixes = ("Wise Man:", "Dragon Warrior:", "Player:")
+    prefixes = ("Wise Man:", "Dragon Warrior:", "Aung Gyi:", "Player:")
     for p in prefixes:
         if s.strip().startswith(p):
             return s.strip()[len(p):].strip()
@@ -350,7 +374,7 @@ def render_gate_scene():
     title_font = pygame.font.SysFont("Arial", 28)
     prompt_font = pygame.font.SysFont("Arial", 28)
     hint_font = pygame.font.SysFont("Arial", 24)
-    screen.blit(title_font.render("The Wise Man:", True, WHITE), (box_rect.x + 20, box_rect.y + 15))
+    screen.blit(title_font.render("Aung Gyi:", True, WHITE), (box_rect.x + 20, box_rect.y + 15))
 
     y = box_rect.y + 60
     at_last = gate_scene_i >= max(0, len(gate_scene_lines) - 1)
@@ -378,7 +402,7 @@ def render_gate_scene():
             y += 32
 
     screen.blit(pygame.transform.scale(main_player.img_down, (250, 250)), (100, 360))
-    screen.blit(pygame.transform.scale(wiseman.img_down, (200, 200)), (500, 380))
+    screen.blit(pygame.transform.scale(aung_gyi.img_down, (200, 200)), (500, 380))
 
     if at_last:
         hint_text = "Left/Right choose Yes/No | Enter confirm | Q back to gates"
@@ -556,6 +580,30 @@ def update_chapter2_interactions():
     can_enter_info_hub = False
 
 
+def prefetch_all_gate_scenes():
+    global gate_payload_cache, gates_prefetched
+    if gates_prefetched:
+        return
+    loading_screen("Chapter II : The Sacred Portals", bg=chapter2_bg)
+    work_path = bool(player_education_status == "Poly" and player_poly_path_choice == "Work")
+    for option in suggested_options:
+        key = str(option)
+        if key in gate_payload_cache:
+            continue
+        try:
+            payload = generate_gate_scene(
+                option_name=key,
+                work_path=work_path,
+                education_status=player_education_status,
+                poly_path_choice=player_poly_path_choice,
+            )
+            if isinstance(payload, dict):
+                gate_payload_cache[key] = payload
+        except Exception as gate_err:
+            print(f"Prefetch gate scene failed for '{key}': {gate_err}")
+    gates_prefetched = True
+
+
 def handle_keydown_ch1(event):
     if event.key != pygame.K_e:
         return
@@ -578,6 +626,7 @@ def handle_keydown_ch1(event):
         if not chapter2_unlocked:
             print("Finish Wise Man path first.")
             return
+        prefetch_all_gate_scenes()
         set_state(CHAPTER2, (100, 300), "Chapter 2: The Portals")
 
 
@@ -596,7 +645,7 @@ def handle_chapter2_enter():
         return
 
     if selected_gate_option not in gate_payload_cache:
-        loading_screen("Generating gate scene...", bg=active_portal_bg if active_portal_bg is not None else chapter2_bg)
+        loading_screen("A delayed gate awakens...", bg=active_portal_bg if active_portal_bg is not None else chapter2_bg)
         work_path = bool(player_education_status == "Poly" and player_poly_path_choice == "Work")
         try:
             payload = generate_gate_scene(
@@ -774,6 +823,7 @@ while running:
                                     )
                                     suggested_options = normalize_suggested_options(analysis_payload.get("suggested_options", []))
                                     gate_payload_cache = {}
+                                    gates_prefetched = False
                                     gate_dragon_saved = {}
                                     path_committed = False
                                     committed_path_option = None
