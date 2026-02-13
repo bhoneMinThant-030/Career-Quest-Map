@@ -247,6 +247,37 @@ def get_portal_option(index):
     return f"Option {index + 1}"
 
 
+def _get_player_label():
+    name = str(player_name).strip()
+    return name if name else "Player"
+
+
+def draw_name_tag(surface, text, center_x, top_y):
+    tag_font = pygame.font.SysFont("Arial", 20, bold=True)
+    txt = tag_font.render(str(text), True, WHITE)
+    pad_x, pad_y = 10, 5
+    box_w = txt.get_width() + pad_x * 2
+    box_h = txt.get_height() + pad_y * 2
+    x = int(center_x - box_w // 2)
+    y = int(top_y - box_h - 6)
+    x = max(8, min(GAME_WIDTH - box_w - 8, x))
+    y = max(8, y)
+    panel = pygame.Rect(x, y, box_w, box_h)
+    pygame.draw.rect(surface, (0, 0, 0, 170), panel, border_radius=8)
+    pygame.draw.rect(surface, WHITE, panel, 2, border_radius=8)
+    surface.blit(txt, (panel.x + pad_x, panel.y + pad_y))
+
+
+def draw_main_player(surface):
+    main_player.draw(surface)
+    draw_name_tag(surface, _get_player_label(), main_player.rect.centerx, main_player.rect.y)
+
+
+def draw_main_player_dialog(surface, pos=(100, 360), size=(250, 250)):
+    sprite = pygame.transform.scale(main_player.img_down, size)
+    surface.blit(sprite, pos)
+
+
 def draw_chapter2_labels():
     label_font = pygame.font.SysFont("Arial", 20)
     if path_committed:
@@ -429,7 +460,7 @@ def render_gate_scene():
             screen.blit(prompt_font.render(ln, True, (230, 230, 230)), (box_rect.x + 20, y))
             y += 32
 
-    screen.blit(pygame.transform.scale(main_player.img_down, (250, 250)), (100, 360))
+    draw_main_player_dialog(screen)
     screen.blit(pygame.transform.scale(aung_gyi.img_down, (200, 200)), (500, 380))
 
     if at_last:
@@ -459,7 +490,7 @@ def render_dragon_scene():
         screen.blit(prompt_font.render(ln, True, (230, 230, 230)), (box_rect.x + 20, y))
         y += 32
 
-    screen.blit(pygame.transform.scale(main_player.img_down, (250, 250)), (100, 360))
+    draw_main_player_dialog(screen)
     screen.blit(pygame.transform.scale(dragon_warrior.img_down, (200, 200)), (500, 380))
 
     hint_text = "Left/Right back/next line | Q back to map" if dragon_scene_i < max(0, len(dragon_scene_lines) - 1) else "Left/Right review lines | Q back to map"
@@ -491,7 +522,7 @@ def render_info_scene():
         if y > box_rect.bottom - 25:
             break
 
-    screen.blit(pygame.transform.scale(main_player.img_down, (250, 250)), (100, 360))
+    draw_main_player_dialog(screen)
     screen.blit(pygame.transform.scale(dragon_warrior.img_down, (200, 200)), (500, 380))
 
     screen.blit(hint_font.render(f"Page {info_page_i + 1}/{len(info_pages)}", True, (200, 200, 200)), (box_rect.x + 20, box_rect.bottom + 140))
@@ -517,20 +548,20 @@ def render_state():
         if chapter2_unlocked:
             exit_gate1.draw(screen)
         render_outside_quest_hint()
-        main_player.draw(screen)
+        draw_main_player(screen)
         return
 
     if state == HOME:
         if gq.quiz_i < len(gq.quiz_questions_home):
             gq.draw_quiz_screen(screen, font, home.bg, gq.quiz_questions_home[gq.quiz_i], npc_name="Fedora")
-            screen.blit(pygame.transform.scale(main_player.img_down, (250, 250)), (100, 360))
+            draw_main_player_dialog(screen)
             screen.blit(pygame.transform.scale(fedora.img_down, (200, 200)), (500, 380))
         return
 
     if state == WISEMAN:
         if gq.quiz_i < len(gq.quiz_questions_wiseman):
             gq.draw_quiz_screen(screen, font, wiseman_tent.bg, gq.quiz_questions_wiseman[gq.quiz_i], npc_name="The Wise Man")
-            screen.blit(pygame.transform.scale(main_player.img_down, (250, 250)), (100, 360))
+            draw_main_player_dialog(screen)
             screen.blit(pygame.transform.scale(wiseman.img_down, (200, 200)), (500, 380))
         return
 
@@ -545,7 +576,7 @@ def render_state():
             if dragon_met:
                 info_hub.draw(screen)
         draw_chapter2_labels()
-        main_player.draw(screen)
+        draw_main_player(screen)
         if show_analysis_overlay:
             render_analysis_overlay()
         return
