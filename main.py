@@ -129,8 +129,16 @@ def loading_screen(title, bg=None):
     overlay.fill((0, 0, 0, 110))
     screen.blit(overlay, (0, 0))
 
-    text = font.render(title, True, WHITE)
-    screen.blit(text, (120, 280))
+    text_lines = wrap_text(title, GAME_WIDTH - 240, font)
+    if not text_lines:
+        text_lines = [str(title)]
+
+    start_x = 120
+    start_y = 260
+    line_gap = 44
+    for i, line in enumerate(text_lines):
+        txt = font.render(line, True, WHITE)
+        screen.blit(txt, (start_x, start_y + i * line_gap))
     pygame.display.flip()
 
 
@@ -668,7 +676,7 @@ def handle_profile_events(event):
         player_education_status = mapped_edu
         player_poly_course = poly_course
 
-        loading_screen("Generating Part 1 questions...", bg=bg_img)
+        loading_screen("Chapter I : The Training Ground", bg=bg_img)
         try:
             gq.load_part1_dynamic_quizzes(education_status=player_education_status, poly_course=player_poly_course)
             part1_ready = True
@@ -740,7 +748,7 @@ while running:
                         if gq.quiz_done:
                             if state == HOME:
                                 part1_answers = gq.collect_answers_for_engine(gq.quiz_questions_home)
-                                loading_screen("Generating Part 2 questions...", bg=bg_img)
+                                loading_screen("Fedora drew a quiet breath, and the next gate of questions slowly opened...", bg=bg_img)
                                 try:
                                     gq.load_part2_dynamic_quizzes(education_status=player_education_status, part1_answers=part1_answers)
                                     part1_done = True
@@ -756,7 +764,7 @@ while running:
                                     inferred_fields = []
                                 player_poly_path_choice = get_poly_path_choice(part2_answers)
 
-                                loading_screen("Generating analysis...", bg=wiseman_tent.bg)
+                                loading_screen("Beneath the magical tree, the Wise Man weighed your strengths in silence...", bg=wiseman_tent.bg)
                                 try:
                                     analysis_payload = generate_analysis(
                                         education_status=player_education_status,
