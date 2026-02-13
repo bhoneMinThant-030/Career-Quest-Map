@@ -113,9 +113,9 @@ def _schema_analysis(options_kind: str) -> str:
         '  "suggested_options": ["...","...","..."]\n'
         "}\n"
         "Rules:\n"
-        "- strength_tags: exactly 3 items\n"
-        "- work_style_tags: 2 to 4 items\n"
-        "- feedback_lines: 2 to 5 lines\n"
+        "- strength_tags: exactly 3 lines with meaningful reasons\n"
+        "- work_style_tags: 3 to 4 lines with meaningful insights\n"
+        "- feedback_lines: 5 lines with realistic and impactful feedbacks\n"
         "- suggested_options: exactly 3\n"
         f"- suggested_options must be {options_kind} (specific names, not generic categories)"
     )
@@ -137,8 +137,8 @@ def _schema_gate(work_path: bool) -> str:
             "  }\n"
             "}\n"
             "Rules:\n"
-            "- info_dialog_lines must include: subjects to study, employment outlook in safe wording, impact on people\n"
-            "- work_style_line must describe typical work style in that industry\n"
+            "- info_dialog_lines must include: subjects to study with real online resources(for example, links), employment outlook in safe wording, impact on people in details\n"
+            "- work_style_line must describe typical work style in that industry in details\n"
             "- salary_outlook_line must be a safe range or qualitative phrasing for a poly fresh graduate"
         )
     return (
@@ -152,7 +152,7 @@ def _schema_gate(work_path: bool) -> str:
         "  }\n"
         "}\n"
         "Rules:\n"
-        "- info_dialog_lines must include: subjects to study, employment outlook in safe wording, impact on people"
+        "- info_dialog_lines must include: subjects to study with real online resources(for example, links), employment outlook in safe wording, impact on people"
     )
 
 
@@ -277,6 +277,9 @@ class ContentEngine:
             "Part 1 topic focus:",
             "- If Secondary School or JC: general career curiosity, interests, passions, personality, preferred activities.",
             "- If Poly: difficulty with current course, frustrations, other passions/interests, motivation, preferred learning style.",
+            "Question quality goal:",
+            "- Questions should feel meaningful, reflective, and easy to answer honestly.",
+            "- Help the student discover patterns in interests, strengths, and learning preferences.",
         ]
 
         hard_rules = [
@@ -289,6 +292,10 @@ class ContentEngine:
             "For slider: scale min=0 max=10 and provide meaningful min_label and max_label.",
             "For rating: scale min=1 max=5.",
             "For text: include a short placeholder.",
+            "Each question must test a distinct dimension: interest, motivation, confidence, preferred style, or values.",
+            "Use plain language suitable for teenagers and young adults.",
+            "Avoid vague prompts. Prefer concrete, relatable scenarios.",
+            "MCQ options must be balanced and plausible, not obviously right or wrong.",
         ]
 
         user_prompt = _build_prompt(task, context_lines, _schema_part1(), hard_rules)
@@ -323,6 +330,7 @@ class ContentEngine:
             "- Then ask 12 questions that narrow among those fields.",
             "Question strategy:",
             "- Early questions compare fields; later questions go deeper into preferences, strengths, and day-to-day tasks.",
+            "- Questions should reveal trade-offs and help the student make an informed direction choice.",
         ]
 
         hard_rules = [
@@ -340,6 +348,11 @@ class ContentEngine:
              if is_poly else
              "If education_status is not Poly: poly_extra_question must be null."),
             "poly_extra_question options must be exactly: [\"Work\",\"Go to uni\"] (2 options).",
+            "Each question should discriminate between at least two inferred fields.",
+            "Avoid repeating near-duplicate prompts with different wording.",
+            "Use realistic day-to-day scenarios (projects, teamwork, problem types, work environment).",
+            "Text questions should invite short reflection on reasons, not one-word answers.",
+            "MCQ options must represent meaningful trade-offs aligned to inferred fields.",
         ]
 
         user_prompt = _build_prompt(task, context_lines, _schema_part2(is_poly=is_poly), hard_rules)
@@ -367,9 +380,9 @@ class ContentEngine:
     ) -> Dict[str, Any]:
         """
         Schema C:
-        - 3 strength tags
-        - 2-4 work style tags
-        - 2-5 feedback lines (fantasy-lite, short)
+        - 3 strength lines with meaningful reasons
+        - 3-4 work style lines with meaningful insights
+        - 5 feedback lines with realistic and impactful feedbacks
         - exactly 3 suggested options:
             - Poly Work -> careers/roles
             - Else -> courses
@@ -389,6 +402,8 @@ class ContentEngine:
             f"part2_answers_json: {_compact_json(part2_answers)}",
             "Output tone:",
             "- Fantasy-lite, like a wise man advising a young explorer. Keep lines short.",
+            "Outcome goal:",
+            "- Give the student clarity, confidence, and concrete next steps.",
         ]
 
         hard_rules = [
@@ -402,6 +417,10 @@ class ContentEngine:
              "For careers use roles like 'Junior Data Analyst', 'Mobile App Developer'."),
             "Do not output generic options like 'Engineering' or 'IT'. Be specific.",
             "Avoid precise statistics.",
+            "Feedback lines must be insightful: each line should include an observation and a practical next step.",
+            "Feedback should reflect patterns from provided answers, not generic advice.",
+            "Keep language encouraging but realistic; avoid exaggerated promises.",
+            "Suggested options should be coherent with inferred fields and work-style signals.",
         ]
 
         user_prompt = _build_prompt(task, context_lines, _schema_analysis(options_kind), hard_rules)
@@ -451,6 +470,8 @@ class ContentEngine:
             "- Quests must be feasible for Secondary School, JC, and Poly students (no expensive equipment).",
             "Tone:",
             "- Fantasy-lite, short dialog lines.",
+            "Quality goal:",
+            "- Guidance should feel practical, specific, and motivating for a student deciding their next step.",
         ]
 
         hard_rules = [
@@ -460,10 +481,15 @@ class ContentEngine:
             "dragon.resources must be a list of 3 to 6 general resources (free/commonly accessible).",
             "Do not assume paid-only services.",
             "Do not include precise statistics.",
-            "Micro quest: 1 week, 5-7 short sessions (<=60 min each) ending with a tangible output.",
-            "Mini project: 1 month with 3 phases (Plan, Build, Review) ending with a showable deliverable.",
-            "Mini project must use free tools and no expensive equipment.",
+            "Micro quest: 1 week, 5-7 short sessions (<=60 min each), very beginner-friendly and clearly step-by-step, ending with one tangible output.",
+            "Micro quest should use concrete beginner tasks (for example: build a basic calculator that keeps running until user exits, or a student grade calculator that takes marks as input).",
+            "Mini project: 1 month with 3 phases (Plan, Build, Review) ending with a showable deliverable; must stay beginner-friendly with clear task scope and outputs.",
+            "Mini project can be a simple practical app/script (for example: a Python restaurant menu program that shows items and calculates total cost).",
+            "Both micro quest and mini project must use free tools and no expensive equipment.",
             "Resources must include exactly 4 items: official docs/reference, beginner tutorial/course, example project/template, community/forum.",
+            "info_dialog_lines should mention what the studnet will learn, how they might apply it, and why it matters.",
+            "Use concrete examples of tasks or deliverables appropriate for beginners.",
+            "Avoid vague claims like 'many opportunities'; use clearer but still safe wording.",
         ]
         if work_path:
             hard_rules.extend([

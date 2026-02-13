@@ -730,7 +730,7 @@ def build_info_pages():
 
 def _strip_speaker_prefix(text):
     s = str(text)
-    prefixes = ("Wise Man:", "Dragon Warrior:", "Aung Gyi:", "Player:")
+    prefixes = ("Wise Man:", "Dragon Warrior:", "The Sage:", "Player:")
     for p in prefixes:
         if s.strip().startswith(p):
             return s.strip()[len(p):].strip()
@@ -746,7 +746,7 @@ def render_gate_scene():
     title_font = pygame.font.SysFont("Arial", 28)
     prompt_font = pygame.font.SysFont("Arial", 28)
     hint_font = pygame.font.SysFont("Arial", 24)
-    screen.blit(title_font.render("Aung Gyi:", True, WHITE), (box_rect.x + 20, box_rect.y + 15))
+    screen.blit(title_font.render("The Sage:", True, WHITE), (box_rect.x + 20, box_rect.y + 15))
 
     y = box_rect.y + 60
     at_last = gate_scene_i >= max(0, len(gate_scene_lines) - 1)
