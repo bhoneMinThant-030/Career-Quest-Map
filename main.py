@@ -1,6 +1,7 @@
 import pygame
 import pygame_widgets
 from pygame_widgets.textbox import TextBox
+import os
 
 from game_classes import *
 import game_quizes as gq
@@ -53,8 +54,15 @@ info_page_i = 0
 
 DIALOG_PLAYER_POS = (130, 400)
 DIALOG_PLAYER_SIZE = (150, 150)
+audio_enabled = False
+opening_audio_path = None
+active_music_key = None
 
 pygame.init()
+try:
+    pygame.mixer.init()
+except Exception as audio_init_err:
+    print(f"Audio disabled: {audio_init_err}")
 
 screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
 pygame.display.set_caption("Career Quest Map")
@@ -70,6 +78,55 @@ first_scene_bg = pygame.image.load("images/FirstScene.png")
 first_scene_bg = pygame.transform.scale(first_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
 dw_scene_bg = pygame.image.load("images/dwScene.png")
 dw_scene_bg = pygame.transform.scale(dw_scene_bg, (GAME_WIDTH, GAME_HEIGHT))
+
+
+def _resolve_opening_audio():
+    candidates = [
+        "openingSceneAudio.mp3",
+        os.path.join("audio", "openingSceneAudio.mp3"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def init_audio():
+    global audio_enabled, opening_audio_path
+    opening_audio_path = _resolve_opening_audio()
+    if opening_audio_path is None:
+        print("Audio file not found: openingSceneAudio.mp3")
+        audio_enabled = False
+        return
+    try:
+        pygame.mixer.music.set_volume(0.45)
+        audio_enabled = True
+    except Exception as audio_err:
+        print(f"Audio disabled: {audio_err}")
+        audio_enabled = False
+
+
+def set_background_music(music_key):
+    global active_music_key
+    if not audio_enabled:
+        return
+    if music_key == active_music_key:
+        return
+    try:
+        if music_key == "opening":
+            if opening_audio_path is None:
+                return
+            pygame.mixer.music.load(opening_audio_path)
+            pygame.mixer.music.play(-1)
+        else:
+            pygame.mixer.music.stop()
+        active_music_key = music_key
+    except Exception as music_err:
+        print(f"Music playback error: {music_err}")
+        active_music_key = None
+
+
+init_audio()
 
 
 def _load_preferred_font(candidates, size, italic=False):
@@ -871,6 +928,11 @@ running = True
 while running:
     dt = clock.tick(60) / 1000.0
     events = pygame.event.get()
+
+    if state in (PROFILE, OUTSIDE):
+        set_background_music("opening")
+    else:
+        set_background_music(None)
 
     for event in events:
         if event.type == pygame.QUIT:
