@@ -1,7 +1,7 @@
 import pygame
 
 #===============Constants===================
-GAME_WIDTH = 800
+GAME_WIDTH = 900
 GAME_HEIGHT = 600
 
 OUTSIDE_SPAWN = (50, 300)

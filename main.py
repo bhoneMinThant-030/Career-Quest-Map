@@ -41,6 +41,7 @@ gate_scene_lines = []
 gate_scene_i = 0
 gate_yes_no_idx = 0
 gate_dragon_saved = {}
+active_portal_bg = None
 path_committed = False
 committed_path_option = None
 dragon_scene_lines = []
@@ -110,16 +111,24 @@ dragon_warrior = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, heig
 home = Structure(GAME_WIDTH - 650, GAME_HEIGHT - 450, 200, 200, "images/house.png", "images/home_bg.png")
 wiseman_tent = Structure(GAME_WIDTH - 400, GAME_HEIGHT - 200, 100, 100, "images/wiseman/west.png", "images/TreeScene.png")
 exit_gate1 = Structure(GAME_WIDTH - 260, GAME_HEIGHT - 250, 100, 100, "images/gate.png", "images/home_bg.png")
-portal1 = Structure(GAME_WIDTH - 660, GAME_HEIGHT - 500, 100, 100, "images/1stGate.png", "images/G1Interior.png")
-portal2 = Structure(GAME_WIDTH - 540, GAME_HEIGHT - 500, 100, 100, "images/2ndGate.png", "images/G2Interior.png")
-portal3 = Structure(GAME_WIDTH - 420, GAME_HEIGHT - 500, 100, 100, "images/3rdGate.png", "images/G3Interior.png")
-info_hub = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 420, 100, 100, "images/home.png", "images/home_bg.png")
+portal1 = Structure(GAME_WIDTH - 660, GAME_HEIGHT - 500, 100, 100, "images/1stGate.png", "images/innerG1.png")
+portal2 = Structure(GAME_WIDTH - 540, GAME_HEIGHT - 500, 100, 100, "images/2ndGate.png", "images/innerG2.png")
+portal3 = Structure(GAME_WIDTH - 420, GAME_HEIGHT - 500, 100, 100, "images/3rdGate.png", "images/innerG3.png")
+info_hub = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 420, 100, 100, "images/questBooth.png", "images/home_bg.png")
 
 WISEMAN_RETURN_SPAWN = (430, 320)
 
 
-def loading_screen(title):
-    screen.fill(BLACK)
+def loading_screen(title, bg=None):
+    if bg is not None:
+        screen.blit(bg, (0, 0))
+    else:
+        screen.fill(BLACK)
+
+    overlay = pygame.Surface((GAME_WIDTH, GAME_HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 110))
+    screen.blit(overlay, (0, 0))
+
     text = font.render(title, True, WHITE)
     screen.blit(text, (120, 280))
     pygame.display.flip()
@@ -158,7 +167,18 @@ def set_state(new_state, spawn_pos=None, title=None):
     if spawn_pos is not None:
         main_player.rect.topleft = spawn_pos
     if title:
-        loading_screen(title)
+        bg = None
+        if new_state == OUTSIDE:
+            bg = bg_img
+        elif new_state == HOME:
+            bg = home.bg
+        elif new_state == WISEMAN:
+            bg = wiseman_tent.bg
+        elif new_state == CHAPTER2:
+            bg = chapter2_bg
+        elif new_state in (GATE_SCENE_STATE, DRAGON_SCENE_STATE, INFO_SCENE_STATE):
+            bg = active_portal_bg if active_portal_bg is not None else home.bg
+        loading_screen(title, bg=bg)
 
 
 def get_portal_option(index):
@@ -233,38 +253,38 @@ def render_analysis_overlay():
     screen.blit(hint, (panel.x + 20, panel.bottom - 36))
 
 def build_gate_scene_lines(option_name, payload):
-    lines = [f"Wise Man: You chose {option_name}. Listen closely."]
+    lines = [f"You chose {option_name}. Listen closely."]
     info_lines = payload.get("info_dialog_lines", [])
     if isinstance(info_lines, list):
         for ln in info_lines:
-            lines.append(f"Wise Man: {str(ln)}")
+            lines.append(str(ln))
     work_style = payload.get("work_style_line")
     if isinstance(work_style, str) and work_style.strip():
-        lines.append(f"Wise Man: Work style in this path is {work_style}")
+        lines.append(f"Work style in this path is {work_style}")
     salary = payload.get("salary_outlook_line")
     if isinstance(salary, str) and salary.strip():
-        lines.append(f"Wise Man: Salary outlook: {salary}")
-    lines.append("Wise Man: Do you want to proceed with the Dragon Path?")
+        lines.append(f"Salary outlook: {salary}")
+    lines.append("Do you want to proceed with the Dragon Path?")
     return lines
 
 
 def build_dragon_scene_lines(option_name, dragon_payload):
-    lines = [f"Dragon Warrior: You chose {option_name}. Your training begins now."]
+    lines = [f"You chose {option_name}. Your training begins now."]
     if isinstance(dragon_payload, dict):
         mq = dragon_payload.get("micro_quest_1_week")
         mp = dragon_payload.get("mini_project_1_month")
         if isinstance(mq, str) and mq.strip():
-            lines.append("Dragon Warrior: Your one-week micro quest:")
-            lines.append(f"Dragon Warrior: {mq}")
+            lines.append("Your one-week micro quest:")
+            lines.append(f"{mq}")
         if isinstance(mp, str) and mp.strip():
-            lines.append("Dragon Warrior: Your one-month mini project:")
-            lines.append(f"Dragon Warrior: {mp}")
+            lines.append("Your one-month mini project:")
+            lines.append(f"{mp}")
         resources = dragon_payload.get("resources", [])
         if isinstance(resources, list) and resources:
-            lines.append("Dragon Warrior: Gather these resources:")
+            lines.append("Gather these resources:")
             for r in resources:
-                lines.append(f"Dragon Warrior: - {str(r)}")
-    lines.append("Dragon Warrior: Return to the map and keep training.")
+                lines.append(f"- {str(r)}")
+    lines.append("Return to the map and keep training.")
     return lines
 
 
@@ -304,8 +324,18 @@ def build_info_pages():
     return pages
 
 
+def _strip_speaker_prefix(text):
+    s = str(text)
+    prefixes = ("Wise Man:", "Dragon Warrior:", "Player:")
+    for p in prefixes:
+        if s.strip().startswith(p):
+            return s.strip()[len(p):].strip()
+    return s
+
+
 def render_gate_scene():
-    screen.blit(home.bg, (0, 0))
+    bg = active_portal_bg if active_portal_bg is not None else home.bg
+    screen.blit(bg, (0, 0))
     box_rect = pygame.Rect(40, 50, 720, 330)
     gq.draw_dialog_box(screen, box_rect, fill_color=(10, 10, 10), alpha=210, border_color=(255, 255, 255))
 
@@ -317,7 +347,8 @@ def render_gate_scene():
     y = box_rect.y + 60
     at_last = gate_scene_i >= max(0, len(gate_scene_lines) - 1)
     if at_last:
-        current = gate_scene_lines[min(gate_scene_i, len(gate_scene_lines) - 1)] if gate_scene_lines else "Wise Man: Proceed?"
+        current = gate_scene_lines[min(gate_scene_i, len(gate_scene_lines) - 1)] if gate_scene_lines else "Proceed?"
+        current = _strip_speaker_prefix(current)
         for ln in wrap_text(current, box_rect.width - 40, prompt_font)[:3]:
             screen.blit(prompt_font.render(ln, True, (230, 230, 230)), (box_rect.x + 20, y))
             y += 36
@@ -332,7 +363,8 @@ def render_gate_scene():
         screen.blit(yes_txt, (yes_rect.centerx - yes_txt.get_width() // 2, yes_rect.y + 8))
         screen.blit(no_txt, (no_rect.centerx - no_txt.get_width() // 2, no_rect.y + 8))
     else:
-        current = gate_scene_lines[min(gate_scene_i, len(gate_scene_lines) - 1)] if gate_scene_lines else "Wise Man: I have no guidance for this gate yet."
+        current = gate_scene_lines[min(gate_scene_i, len(gate_scene_lines) - 1)] if gate_scene_lines else "I have no guidance for this gate yet."
+        current = _strip_speaker_prefix(current)
         for ln in wrap_text(current, box_rect.width - 40, prompt_font)[:6]:
             screen.blit(prompt_font.render(ln, True, (230, 230, 230)), (box_rect.x + 20, y))
             y += 32
@@ -350,7 +382,8 @@ def render_gate_scene():
 
 
 def render_dragon_scene():
-    screen.blit(home.bg, (0, 0))
+    bg = active_portal_bg if active_portal_bg is not None else home.bg
+    screen.blit(bg, (0, 0))
     box_rect = pygame.Rect(40, 50, 720, 330)
     gq.draw_dialog_box(screen, box_rect, fill_color=(10, 10, 10), alpha=210, border_color=(255, 255, 255))
 
@@ -359,7 +392,8 @@ def render_dragon_scene():
     hint_font = pygame.font.SysFont("Arial", 24)
     screen.blit(title_font.render("Dragon Warrior:", True, WHITE), (box_rect.x + 20, box_rect.y + 15))
 
-    current = dragon_scene_lines[min(dragon_scene_i, len(dragon_scene_lines) - 1)] if dragon_scene_lines else "Dragon Warrior: I await your chosen path."
+    current = dragon_scene_lines[min(dragon_scene_i, len(dragon_scene_lines) - 1)] if dragon_scene_lines else "I await your chosen path."
+    current = _strip_speaker_prefix(current)
     y = box_rect.y + 60
     for ln in wrap_text(current, box_rect.width - 40, prompt_font)[:6]:
         screen.blit(prompt_font.render(ln, True, (230, 230, 230)), (box_rect.x + 20, y))
@@ -373,7 +407,8 @@ def render_dragon_scene():
 
 
 def render_info_scene():
-    screen.blit(home.bg, (0, 0))
+    bg = active_portal_bg if active_portal_bg is not None else home.bg
+    screen.blit(bg, (0, 0))
     box_rect = pygame.Rect(40, 50, 720, 330)
     gq.draw_dialog_box(screen, box_rect, fill_color=(10, 10, 10), alpha=210, border_color=(255, 255, 255))
 
@@ -539,18 +574,21 @@ def handle_keydown_ch1(event):
 
 
 def handle_chapter2_enter():
-    global selected_gate_option, gate_scene_lines, gate_scene_i, gate_yes_no_idx
+    global selected_gate_option, gate_scene_lines, gate_scene_i, gate_yes_no_idx, active_portal_bg
     if can_enter_portal1:
         selected_gate_option = get_portal_option(0)
+        active_portal_bg = portal1.bg
     elif can_enter_portal2:
         selected_gate_option = get_portal_option(1)
+        active_portal_bg = portal2.bg
     elif can_enter_portal3:
         selected_gate_option = get_portal_option(2)
+        active_portal_bg = portal3.bg
     else:
         return
 
     if selected_gate_option not in gate_payload_cache:
-        loading_screen("Generating gate scene...")
+        loading_screen("Generating gate scene...", bg=active_portal_bg if active_portal_bg is not None else chapter2_bg)
         work_path = bool(player_education_status == "Poly" and player_poly_path_choice == "Work")
         try:
             payload = generate_gate_scene(
@@ -630,7 +668,7 @@ def handle_profile_events(event):
         player_education_status = mapped_edu
         player_poly_course = poly_course
 
-        loading_screen("Generating Part 1 questions...")
+        loading_screen("Generating Part 1 questions...", bg=bg_img)
         try:
             gq.load_part1_dynamic_quizzes(education_status=player_education_status, poly_course=player_poly_course)
             part1_ready = True
@@ -702,7 +740,7 @@ while running:
                         if gq.quiz_done:
                             if state == HOME:
                                 part1_answers = gq.collect_answers_for_engine(gq.quiz_questions_home)
-                                loading_screen("Generating Part 2 questions...")
+                                loading_screen("Generating Part 2 questions...", bg=home.bg)
                                 try:
                                     gq.load_part2_dynamic_quizzes(education_status=player_education_status, part1_answers=part1_answers)
                                     part1_done = True
@@ -718,7 +756,7 @@ while running:
                                     inferred_fields = []
                                 player_poly_path_choice = get_poly_path_choice(part2_answers)
 
-                                loading_screen("Generating analysis...")
+                                loading_screen("Generating analysis...", bg=home.bg)
                                 try:
                                     analysis_payload = generate_analysis(
                                         education_status=player_education_status,
