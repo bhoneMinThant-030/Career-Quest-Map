@@ -382,8 +382,7 @@ blocked_rects_by_state = {
     OUTSIDE: OUTSIDE_BLOCKED_RECTS,
     CHAPTER2: CHAPTER2_BLOCKED_RECTS,
 }
-SHOW_COLLISION_DEBUG = True
-
+SHOW_COLLISION_DEBUG = False
 
 def _spawn_near(rect, dx=0, dy=70):
     x = rect.centerx + dx
@@ -818,11 +817,11 @@ def render_info_scene():
 def render_outside_quest_hint():
     hint_font = pygame.font.SysFont("Arial", 24)
     if not part1_done:
-        msg = "Quest: Complete House questions"
+        msg = "Quest: Find the House on the Map"
     elif not chapter2_unlocked:
-        msg = "Quest: Visit Wise Man"
+        msg = "Quest: Meet the Wise Man"
     else:
-        msg = "Quest: Go to the Gate"
+        msg = "Quest: Exit to Chapter II"
     screen.blit(hint_font.render(msg, True, (255, 245, 170)), (24, 24))
 
 
@@ -830,13 +829,13 @@ def render_state():
     if state == OUTSIDE:
         screen.blit(bg_img, (0, 0))
         home.draw(screen)
-        draw_structure_label(screen, home, "Home")
+        draw_structure_label(screen, home, "The House")
         if part1_done:
             wiseman_tent.draw(screen)
-            draw_structure_label(screen, wiseman_tent, "Wise Man")
+            draw_structure_label(screen, wiseman_tent, "The Wise Man")
         if chapter2_unlocked:
             exit_gate1.draw(screen)
-            draw_structure_label(screen, exit_gate1, "Chapter Gate")
+            draw_structure_label(screen, exit_gate1, "Exit Gate")
         if can_enter_home:
             draw_enter_prompt(screen, home.rect)
         elif can_enter_wiseman:
