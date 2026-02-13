@@ -123,12 +123,32 @@ aung_gyi = Player(x=GAME_WIDTH - 500, y=GAME_HEIGHT - 280, width=100, height=100
 home = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 585, 200, 200, "images/house.png", "images/home_bg.png")
 wiseman_tent = Structure(GAME_WIDTH - 220, GAME_HEIGHT - 210, 100, 100, "images/wiseman/west.png", "images/TreeScene.png")
 exit_gate1 = Structure(GAME_WIDTH - 388, GAME_HEIGHT - 115, 60, 60, "images/gate.png", "images/home_bg.png")
-portal1 = Structure(GAME_WIDTH - 572, GAME_HEIGHT - 460, 65, 65, "images/1stGate.png", "images/innerG1.png")
-portal2 = Structure(GAME_WIDTH - 482, GAME_HEIGHT - 460, 65, 65, "images/2ndGate.png", "images/innerG2.png")
-portal3 = Structure(GAME_WIDTH - 392, GAME_HEIGHT - 460, 65, 65, "images/3rdGate.png", "images/innerG3.png")
+portal1 = Structure(GAME_WIDTH - 572, GAME_HEIGHT - 480, 65, 80, "images/1stGate.png", "images/innerG1.png")
+portal2 = Structure(GAME_WIDTH - 482, GAME_HEIGHT - 480, 65, 80, "images/2ndGate.png", "images/innerG2.png")
+portal3 = Structure(GAME_WIDTH - 392, GAME_HEIGHT - 480, 65, 80, "images/3rdGate.png", "images/innerG3.png")
 info_hub = Structure(GAME_WIDTH - 300, GAME_HEIGHT - 420, 100, 100, "images/questBooth.png", "images/home_bg.png")
 
-WISEMAN_RETURN_SPAWN = (430, 320)
+WISEMAN_RETURN_SPAWN = (620, 390)
+
+
+def _spawn_near(rect, dx=0, dy=70):
+    x = rect.centerx + dx
+    y = rect.bottom + dy
+    x = max(0, min(GAME_WIDTH - main_player.rect.width, x))
+    y = max(0, min(GAME_HEIGHT - main_player.rect.height, y))
+    return (x, y)
+
+
+HOME_EXIT_SPAWN = _spawn_near(home.rect, dx=-180, dy=-50)
+WISEMAN_EXIT_SPAWN = _spawn_near(wiseman_tent.rect, dx=-90, dy=-90)
+CH1_GATE_EXIT_SPAWN = _spawn_near(exit_gate1.rect, dx=-40, dy=10)
+PORTAL_EXIT_SPAWNS = {
+    0: _spawn_near(portal1.rect, dx=0, dy=30),
+    1: _spawn_near(portal2.rect, dx=0, dy=30),
+    2: _spawn_near(portal3.rect, dx=0, dy=30),
+}
+DRAGON_EXIT_SPAWN = _spawn_near(dragon_warrior.rect, dx=-60, dy=20)
+INFO_HUB_EXIT_SPAWN = _spawn_near(info_hub.rect, dx=0, dy=20)
 
 
 def loading_screen(title, bg=None):
@@ -191,13 +211,21 @@ def wrap_text(text, max_width, local_font):
     return lines
 
 
-def set_state(new_state, spawn_pos=None, title=None):
+def set_state(new_state, spawn_pos=None, title=None, facing=None):
     global state, show_analysis_overlay
     state = new_state
     if new_state == CHAPTER2 and analysis_payload and not analysis_overlay_seen:
         show_analysis_overlay = True
     if spawn_pos is not None:
         main_player.rect.topleft = spawn_pos
+    if facing == "up":
+        main_player.img = main_player.img_up
+    elif facing == "down":
+        main_player.img = main_player.img_down
+    elif facing == "left":
+        main_player.img = main_player.img_left
+    elif facing == "right":
+        main_player.img = main_player.img_right
     if title:
         bg = None
         if new_state == OUTSIDE:
@@ -627,7 +655,7 @@ def handle_keydown_ch1(event):
             print("Finish Wise Man path first.")
             return
         prefetch_all_gate_scenes()
-        set_state(CHAPTER2, (100, 300), "Chapter 2: The Portals")
+        set_state(CHAPTER2, (20, 240), "Chapter 2: The Portals", facing="right")
 
 
 def handle_chapter2_enter():
@@ -684,6 +712,16 @@ def handle_info_hub_enter():
     info_pages = build_info_pages()
     info_page_i = 0
     set_state(INFO_SCENE_STATE)
+
+
+def get_selected_portal_exit_spawn():
+    if selected_gate_option == get_portal_option(0):
+        return PORTAL_EXIT_SPAWNS.get(0)
+    if selected_gate_option == get_portal_option(1):
+        return PORTAL_EXIT_SPAWNS.get(1)
+    if selected_gate_option == get_portal_option(2):
+        return PORTAL_EXIT_SPAWNS.get(2)
+    return (120, 300)
 
 def handle_profile_events(event):
     global education_selected_idx
@@ -790,7 +828,10 @@ while running:
                 if event.type == pygame.KEYDOWN:
                     action = gq.handle_quiz_event(event, active)
                     if action == "quit":
-                        state = OUTSIDE
+                        if state == HOME:
+                            set_state(OUTSIDE, HOME_EXIT_SPAWN, facing="down")
+                        else:
+                            set_state(OUTSIDE, WISEMAN_EXIT_SPAWN, facing="left")
                         gq.reset_quiz_progress()
                     elif action == "next":
                         gq.quiz_next(active)
@@ -804,7 +845,7 @@ while running:
                                     part2_ready = True
                                 except Exception as e:
                                     print(f"Failed to generate Part 2: {e}")
-                                state = OUTSIDE
+                                set_state(OUTSIDE, HOME_EXIT_SPAWN, facing="down")
                                 gq.reset_quiz_progress()
                             else:
                                 part2_answers = gq.collect_answers_for_engine(gq.quiz_questions_wiseman)
@@ -831,13 +872,16 @@ while running:
                                     chapter2_unlocked = True
                                     analysis_overlay_seen = False
                                     show_analysis_overlay = False
-                                    set_state(OUTSIDE, WISEMAN_RETURN_SPAWN, "Return to Training Ground")
+                                    set_state(OUTSIDE, WISEMAN_RETURN_SPAWN, "Return to Training Ground", facing="left")
                                 except Exception as e:
                                     print(f"Failed to generate analysis: {e}")
-                                    state = OUTSIDE
+                                    set_state(OUTSIDE, WISEMAN_EXIT_SPAWN, facing="left")
                                 gq.reset_quiz_progress()
             else:
-                state = OUTSIDE
+                if state == HOME:
+                    set_state(OUTSIDE, HOME_EXIT_SPAWN, facing="down")
+                else:
+                    set_state(OUTSIDE, WISEMAN_EXIT_SPAWN, facing="left")
                 gq.reset_quiz_progress()
             continue
 
@@ -857,10 +901,10 @@ while running:
                     else:
                         handle_chapter2_enter()
                 elif event.key == pygame.K_q:
-                    set_state(OUTSIDE, OUTSIDE_SPAWN, "Returning Outside")
+                    set_state(OUTSIDE, CH1_GATE_EXIT_SPAWN, "Returning Outside", facing="left")
             elif state == GATE_SCENE_STATE:
                 if event.key == pygame.K_q:
-                    set_state(CHAPTER2, (120, 300))
+                    set_state(CHAPTER2, get_selected_portal_exit_spawn(), facing="down")
                 else:
                     is_guide_last = gate_scene_i >= max(0, len(gate_scene_lines) - 1)
                     if is_guide_last:
@@ -877,9 +921,9 @@ while running:
                                         gate_dragon_saved[selected_gate_option] = dragon_payload
                                 path_committed = True
                                 committed_path_option = selected_gate_option
-                                set_state(CHAPTER2, (120, 300), "Path Chosen: Meet Dragon Warrior")
+                                set_state(CHAPTER2, DRAGON_EXIT_SPAWN, "Path Chosen: Meet Dragon Warrior", facing="right")
                             else:
-                                set_state(CHAPTER2, (120, 300))
+                                set_state(CHAPTER2, get_selected_portal_exit_spawn(), facing="down")
                     else:
                         if event.key == pygame.K_LEFT:
                             gate_scene_i = max(0, gate_scene_i - 1)
@@ -890,14 +934,14 @@ while running:
                                 gate_scene_i += 1
             elif state == DRAGON_SCENE_STATE:
                 if event.key == pygame.K_q:
-                    set_state(CHAPTER2, (120, 300))
+                    set_state(CHAPTER2, DRAGON_EXIT_SPAWN, facing="right")
                 elif event.key == pygame.K_LEFT:
                     dragon_scene_i = max(0, dragon_scene_i - 1)
                 elif event.key == pygame.K_RIGHT:
                     dragon_scene_i = min(max(0, len(dragon_scene_lines) - 1), dragon_scene_i + 1)
             elif state == INFO_SCENE_STATE:
                 if event.key == pygame.K_q:
-                    set_state(CHAPTER2, (120, 300))
+                    set_state(CHAPTER2, INFO_HUB_EXIT_SPAWN, facing="left")
                 elif event.key == pygame.K_LEFT:
                     info_page_i = max(0, info_page_i - 1)
                 elif event.key == pygame.K_RIGHT:

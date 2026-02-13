@@ -4,7 +4,7 @@ import pygame
 GAME_WIDTH = 900
 GAME_HEIGHT = 600
 
-OUTSIDE_SPAWN = (50, 300)
+OUTSIDE_SPAWN = (50, 220)
 HOME_SPAWN    = (100, 300)
 
 # Colors 
