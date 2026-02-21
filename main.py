@@ -77,6 +77,13 @@ except Exception as audio_init_err:
 
 screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
 pygame.display.set_caption("Career Quest Map")
+for _icon_path in (os.path.join("images", "logo.png"), "logo.png"):
+    if os.path.exists(_icon_path):
+        try:
+            pygame.display.set_icon(pygame.image.load(_icon_path).convert_alpha())
+        except Exception as icon_err:
+            print(f"Failed to set window icon from {_icon_path}: {icon_err}")
+        break
 font = pygame.font.SysFont("Arial", 32)
 
 bg_img = pygame.image.load("images/background.png")
